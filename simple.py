@@ -35,6 +35,8 @@ valueW2 = [[0.296015539, 0.298796651, 0.218944852, 0.194505800, 0.737771838],
            [0.049989531, 0.189385222, 0.613595088, 0.763298634, 0.432115047],
            [0.880362946, 0.432980229, 0.070170702, 0.707604930, 0.591374432],
            [0.202527461, 0.073010964, 0.534760797, 0.478653934, 0.476729378]]
+natureExp = RealVal(math.e)
+reluC = RealVal(0.01)
 
 set_option(rational_to_decimal=True)
 
@@ -66,6 +68,10 @@ def sanityCheck(X, Y, m, n):
   print "Sanity-Out-X", sanityOutX
   print "Sanity-Out-Y", sanityOutY
 
+def sigmoid(x):
+  res = 1 / (1 + natureExp**(-x))
+  return res
+
 def vvmul(V1, V2, n):
   res = 0
   for i in range(0, n):
@@ -75,8 +81,12 @@ def vvmul(V1, V2, n):
 def vmmul(V, M, O, n):
   res = [None] * n
   for i in range(0, n):
+    ### Use ReLU for activatation
     tmp = vvmul(M[i], V, n)
-    res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
+    #res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
+    res[i] = If(tmp >= 0, O[i] == tmp, O[i] == tmp * reluC)
+    ### Use sigmoid for activatation
+    #res[i] = (O[i] == sigmoid(tmp))
   return res
 
 l1_x_cond = vmmul(X, W1, L1X, 5)
@@ -96,6 +106,8 @@ s.add(l1_x_cond +
       out_y_cond +
       input_cond +
       output_cond)
+#for c in s.assertions():
+#  print c
 
 if (s.check() == sat):
   m = s.model()
@@ -105,6 +117,6 @@ if (s.check() == sat):
   print "L1-Y", [m.evaluate(L1Y[i]) for i in range(5)]
   print "Out-X", [m.evaluate(OX[i]) for i in range(5)]
   print "Out-Y", [m.evaluate(OY[i]) for i in range(5)]
-  sanityCheck(X, Y, m, 5)
+  #sanityCheck(X, Y, m, 5)
 else:
   print s.check()
