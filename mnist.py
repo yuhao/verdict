@@ -9,9 +9,9 @@ set_option(rational_to_decimal=True)
 
 reluC = RealVal(0.01)
 
-weights1 = genfromtxt('mnist/data/weights1.csv', delimiter=',')
-weights2 = genfromtxt('mnist/data/weights2.csv', delimiter=',')
-weights3 = genfromtxt('mnist/data/weights3.csv', delimiter=',')
+weights1 = genfromtxt('mnist/para/weights1.csv', delimiter=',')
+weights2 = genfromtxt('mnist/para/weights2.csv', delimiter=',')
+weights3 = genfromtxt('mnist/para/weights3.csv', delimiter=',')
 
 l0_n, l1_n = weights1.shape #748, 128
 l2_n, l3_n = weights3.shape #32, 10
@@ -25,9 +25,9 @@ print float(W1[l0_n - 1][l1_n - 1].as_decimal(20)), weights1[l0_n - 1][l1_n - 1]
 print float(W2[l1_n - 1][l2_n - 1].as_decimal(20)), weights2[l1_n - 1][l2_n - 1]
 print float(W3[l2_n - 1][l3_n - 1].as_decimal(20)), weights3[l2_n - 1][l3_n - 1]
 
-biases1 = genfromtxt('mnist/data/biases1.csv', delimiter=',')
-biases2 = genfromtxt('mnist/data/biases2.csv', delimiter=',')
-biases3 = genfromtxt('mnist/data/biases3.csv', delimiter=',')
+biases1 = genfromtxt('mnist/para/biases1.csv', delimiter=',')
+biases2 = genfromtxt('mnist/para/biases2.csv', delimiter=',')
+biases3 = genfromtxt('mnist/para/biases3.csv', delimiter=',')
 
 B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
 B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
