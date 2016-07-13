@@ -39,8 +39,8 @@ print float(B2[l2_n - 1].as_decimal(20)), biases2[l2_n - 1]
 print float(B3[l3_n - 1].as_decimal(20)), biases3[l3_n - 1]
 
 print "*****Start Solving*****"
-InX = [ Int('inX-%s' % i) for i in range(l0_n) ]
-InY= [ Int('inY-%s' % i) for i in range(l0_n) ]
+InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
+InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
 L1X = [ Real('l1X-%s' % i) for i in range(l1_n) ]
 L1Y = [ Real('l1Y-%s' % i) for i in range(l1_n) ]
 L2X = [ Real('l2X-%s' % i) for i in range(l2_n) ]
