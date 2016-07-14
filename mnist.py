@@ -62,9 +62,16 @@ def approx_sigmoid(x):
   return res
 
 def robust(X, Y, n):
-  # robust(X, Y) is equivalent to assert argmax(X) == argmax(Y)
+  # robust(X, Y) is equivalent to assert argmax(X) == argmax(Y). Note that if
+  # there are multiple occurrences of the max value, the standard argmax will
+  # return only the first occurrence.  In that case, this |robust|
+  # implementation for checking robustness is incorrect. For example, if
+  # X = [4, 4, 4] and Y = [3, 5, 3], then argmax(X) is 0 and argmax(Y) is 1.
+  # In this case, argmax(X) != argmax(Y) while robust(X, Y, 3) is still true
+  # because And(X[1] >= X[0], X[1] >= X[2], Y[1] >= Y[0], Y[1] >= Y[2]) == True.
   return Or( [ And( [ And( X[j] >= X[i], Y[j] >= Y[i] ) for i in range(n) if i != j ] ) for j in range(n) ] )
 
+# To Make sure all elements in X are different
 def unique(X, n):
   return And([X[i] != X[j] for i in range(n) for j in range(i) if j != i])
 
@@ -95,7 +102,8 @@ l1_y_cond = vmmul(InY, W1, L1Y, l1_n)
 l2_y_cond = vmmul(L1Y, W2, L2Y, l2_n)
 out_y_cond = vmmul(L2Y, W3, OutY, l3_n)
 
-input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < 0.0001, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
+#TODO: The input pertubation constriants have to be more general
+input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < 0.0001, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
 
 # This is a necessary but not sufficient constraint for negating robustness (for classification)
 output_cond = [ Or( [ OutY[i] - OutX[i] > 1 for i in range(l3_n) ] ) ]
