@@ -112,7 +112,7 @@ out_y_cond = vmmul(L2Y, W3, B3, OutY, l2_n, l3_n)
 input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < 0.0001, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
 
 # This is a necessary but not sufficient constraint for negating robustness (for classification)
-output_cond = [ Or( [ OutY[i] - OutX[i] > 1 for i in range(l3_n) ] ) ]
+#output_cond = [ Or( [ OutY[i] - OutX[i] > 1 for i in range(l3_n) ] ) ]
 ## This is a precise constraint for negating robustness, but more complex to solve
 output_cond = [ Not( robust(OutX, OutY, l3_n) ) ]
 
@@ -136,8 +136,8 @@ duration = time.time() - startTime
 if (result == sat):
   m = s.model()
   print m
-  print "argmax(OutX)", np.argmax([float(m.evaluate(OX[i]).as_decimal(20)) for i in range(5)])
-  print "argmax(OutY)", np.argmax([float(m.evaluate(OY[i]).as_decimal(20)) for i in range(5)])
+  print "argmax(OutX)", np.argmax([float(m.evaluate(OutX[i]).as_decimal(20)) for i in range(l1_n)])
+  print "argmax(OutY)", np.argmax([float(m.evaluate(OutY[i]).as_decimal(20)) for i in range(l1_n)])
 else:
   print s.check()
 print "[Runtime]", duration
