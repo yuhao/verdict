@@ -93,8 +93,8 @@ duration = time.time() - startTime
 if (result == sat):
   m = s.model()
   print m
-  print "argmax(OutX)", np.argmax([float(m.evaluate(OX[i]).as_decimal(20)) for i in range(5)])
-  print "argmax(OutY)", np.argmax([float(m.evaluate(OY[i]).as_decimal(20)) for i in range(5)])
+  print "argmax(OutX)", np.argmax([float(m.evaluate(OutX[i]).as_decimal(20)) for i in range(l1_n)])
+  print "argmax(OutY)", np.argmax([float(m.evaluate(OutY[i]).as_decimal(20)) for i in range(l1_n)])
 else:
   print s.check()
 print "[Runtime]", duration
