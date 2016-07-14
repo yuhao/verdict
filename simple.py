@@ -2,6 +2,7 @@
 
 from z3 import *
 import sys
+import numpy as np
 
 X = [ Int('x%s' % i) for i in range(5) ]
 Y = [ Int('y%s' % i) for i in range(5) ]
@@ -40,7 +41,7 @@ natureExp = RealVal(math.e)
 reluC = RealVal(0.01)
 
 set_option(rational_to_decimal=True)
-set_option("verbose", 10)
+set_option("verbose", 20)
 
 def sanity(v, w1, w2, n):
   hl = [0] * n
@@ -80,6 +81,9 @@ def approx_sigmoid(x):
   res = 1 / (1 + approxExp)
   return res
 
+def robust(X, Y, n):
+  return Or( [ And( [ And( X[j] > X[i], Y[j] > Y[i] ) for i in range(n) if i != j ] ) for j in range(n) ] )
+
 def vvmul(V1, V2, n):
   res = 0
   for i in range(0, n):
@@ -104,13 +108,9 @@ out_x_cond = vmmul(L1X, W2, OX, 5)
 l1_y_cond = vmmul(Y, W1, L1Y, 5)
 out_y_cond = vmmul(L1Y, W2, OY, 5)
 
-input_cond = [ And(0 <= Y[i] - X[i], Y[i] - X[i] < 2, 0 <= Y[i], Y[i] < 32, 0 <= X[i], X[i] < 32) for i in range(5) ]
+input_cond = [ And(0 < Y[i] - X[i], Y[i] - X[i] < 2, 0 <= Y[i], Y[i] < 32, 0 <= X[i], X[i] < 32) for i in range(5) ]
 
-output_cond = [ Or(OY[0] - OX[0] > 1,
-                   OY[1] - OX[1] > 1,
-                   OY[2] - OX[2] > 1,
-                   OY[3] - OX[3] > 1,
-                   OY[4] - OX[4] > 1) ]
+output_cond = [ Not(robust(OX, OY, 5)) ]
 
 #s = Then('simplify', 'nlsat').solver()
 s = Solver()
@@ -132,8 +132,8 @@ if (s.check() == sat):
   print "Y", [m.evaluate(Y[i]) for i in range(5)]
   print "L1-X", [m.evaluate(L1X[i]) for i in range(5)]
   print "L1-Y", [m.evaluate(L1Y[i]) for i in range(5)]
-  print "Out-X", [m.evaluate(OX[i]) for i in range(5)]
-  print "Out-Y", [m.evaluate(OY[i]) for i in range(5)]
+  print "Out-X", np.argmax([float(m.evaluate(OX[i]).as_decimal(20)) for i in range(5)])
+  print "Out-Y", np.argmax([float(m.evaluate(OY[i]).as_decimal(20)) for i in range(5)])
   sanityCheck(X, Y, m, 5)
 else:
   print s.check()
