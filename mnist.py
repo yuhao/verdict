@@ -3,18 +3,19 @@
 #inputL(l0) --> hiddenL1(l1) --> hiddenL2(l2) --> outputL(l3)
 
 from z3 import *
-from numpy import genfromtxt
+import numpy as np
 import time
 
 set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
+natureExp = RealVal(math.e)
 reluC = RealVal(0.01)
 
 print "*****Creating Weights*****"
-weights1 = genfromtxt('mnist/para/weights1.csv', delimiter=',')
-weights2 = genfromtxt('mnist/para/weights2.csv', delimiter=',')
-weights3 = genfromtxt('mnist/para/weights3.csv', delimiter=',')
+weights1 = np.genfromtxt('mnist/para/weights1.csv', delimiter=',')
+weights2 = np.genfromtxt('mnist/para/weights2.csv', delimiter=',')
+weights3 = np.genfromtxt('mnist/para/weights3.csv', delimiter=',')
 
 l0_n, l1_n = weights1.shape #748, 128
 l2_n, l3_n = weights3.shape #32, 10
@@ -28,9 +29,9 @@ print float(W2[l1_n - 1][l2_n - 1].as_decimal(20)), weights2[l1_n - 1][l2_n - 1]
 print float(W3[l2_n - 1][l3_n - 1].as_decimal(20)), weights3[l2_n - 1][l3_n - 1]
 
 print "*****Creating Biases*****"
-biases1 = genfromtxt('mnist/para/biases1.csv', delimiter=',')
-biases2 = genfromtxt('mnist/para/biases2.csv', delimiter=',')
-biases3 = genfromtxt('mnist/para/biases3.csv', delimiter=',')
+biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
+biases2 = np.genfromtxt('mnist/para/biases2.csv', delimiter=',')
+biases3 = np.genfromtxt('mnist/para/biases3.csv', delimiter=',')
 
 B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
 B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
@@ -49,6 +50,16 @@ L2X = [ Real('l2X-%s' % i) for i in range(l2_n) ]
 L2Y = [ Real('l2Y-%s' % i) for i in range(l2_n) ]
 OutX = [ Real('outX-%s' % i) for i in range(l3_n) ]
 OutY = [ Real('outY-%s' % i) for i in range(l3_n) ]
+
+def sigmoid(x):
+  res = 1 / (1 + natureExp**(-x))
+  return res
+
+# Use the first 4 terms of the taylor series of exp
+def approx_sigmoid(x):
+  approxExp = 1 - x + x**2 / 2 - x**3/6
+  res = 1 / (1 + approxExp)
+  return res
 
 def robust(X, Y, n):
   # robust(X, Y) is equivalent to assert argmax(X) == argmax(Y)
@@ -71,6 +82,9 @@ def vmmul(V, M, O, n):
     res[i] = (O[i] == tmp)
     #res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
     #res[i] = If(tmp >= 0, O[i] == tmp, O[i] == tmp * reluC)
+    ### Use sigmoid for activatation
+    #res[i] = (O[i] == sigmoid(tmp))
+    #res[i] = (O[i] == approx_sigmoid(tmp))
   return res
 
 l1_x_cond = vmmul(InX, W1, L1X, l1_n)
@@ -108,6 +122,8 @@ duration = time.time() - startTime
 if (result == sat):
   m = s.model()
   print m
+  print "argmax(OutX)", np.argmax([float(m.evaluate(OX[i]).as_decimal(20)) for i in range(5)])
+  print "argmax(OutY)", np.argmax([float(m.evaluate(OY[i]).as_decimal(20)) for i in range(5)])
 else:
   print s.check()
-print duration
+print "[Runtime]", duration
