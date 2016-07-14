@@ -5,14 +5,37 @@
 from z3 import *
 import numpy as np
 import time
+import argparse
+
+parser = argparse.ArgumentParser(description="Verdict harness.")
+parser.add_argument("-i", "--input-perturbation",
+                    dest="input_pert",
+                    type=float,
+                    help="input perturbation. choose between (0, 1)",
+                    default=0.0001)
+parser.add_argument("-r", "--robustness",
+                    dest="robust_cons",
+                    help="robustness constraint. choose between <weak, medium, strong>",
+                    default="strong")
+parser.add_argument("-o", "--output-perturbation",
+                    dest="output_pert",
+                    type=int,
+                    help="output tolerance. invalid when robustness is strong",
+                    default=1)
+
+args = parser.parse_args()
+input_pert = args.input_pert
+robust_cons = args.robust_cons
+output_pert = args.output_pert
+
+print "*****Using Parameters*****"
+for arg in vars(args):
+  print '[' + arg + ']:', getattr(args, arg)
 
 set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
-natureExp = RealVal(math.e)
-reluC = RealVal(0.01)
-
-print "*****Creating Weights*****"
+print "\n*****Creating Weights*****"
 weights = np.genfromtxt('mnist/para/softmax_weights.csv', delimiter=',')
 
 l0_n, l1_n = weights.shape #748, 10
@@ -23,14 +46,14 @@ W = [ [ RealVal(weights[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
 
 print float(W[l1_n - 1][l0_n - 1].as_decimal(20)), weights[l1_n - 1][l0_n - 1]
 
-print "*****Creating Biases*****"
+print "\n*****Creating Biases*****"
 biases = np.genfromtxt('mnist/para/softmax_biases.csv', delimiter=',')
 
 B = [ RealVal(biases[i]) for i in range(l1_n) ]
 
 print float(B[l1_n - 1].as_decimal(20)), biases[l1_n - 1]
 
-print "*****Creating Assertions*****"
+print "\n*****Creating Assertions*****"
 InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
 InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
 OutX = [ Real('outX-%s' % i) for i in range(l1_n) ]
@@ -70,22 +93,31 @@ out_x_cond = vmmul(InX, W, B, OutX, l0_n, l1_n)
 out_y_cond = vmmul(InY, W, B, OutY, l0_n, l1_n)
 
 #TODO: The input pertubation constriants have to be more general
-input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < 0.0001, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
+input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < input_pert, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
 
-# This is a necessary but not sufficient constraint for negating robustness (for classification)
-#output_cond = [ Or( [ OutY[i] - OutX[i] > 1 for i in range(l1_n) ] ) ]
-# This is a precise constraint for negating robustness, but more complex to solve
-output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
+if robust_cons == "weak":
+  # This is the weakest constraint. It asserts that the new output is wrong
+  # only when all labels are off by |output_pert|.
+  output_cond = [ OutY[i] - OutX[i] > output_pert for i in range(l1_n) ]
+elif robust_cons == "medium":
+  # This is stronger than the weak constraint, but is a necessary but
+  # insufficient constraint for negating robustness. It asserts an output as
+  # wrong if any of the label is off by |output_pert|.
+  output_cond = [ Or( [ OutY[i] - OutX[i] > output_pert for i in range(l1_n) ] ) ]
+else:
+  # This is the precise constraint for negating robustness (see comments for
+  # |robust| implementation for details), but more complex to solve.
+  output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
 
 s = Solver()
 s.add(out_x_cond +
       out_y_cond +
       input_cond +
       output_cond)
-#asserts = s.assertions()
-#print len(asserts), "constraints"
+asserts = s.assertions()
+print len(asserts), "constraints"
 
-print "*****Start Solving*****"
+print "\n*****Start Solving*****"
 startTime = time.time()
 result = s.check()
 duration = time.time() - startTime
