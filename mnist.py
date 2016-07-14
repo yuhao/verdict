@@ -20,13 +20,17 @@ weights3 = np.genfromtxt('mnist/para/weights3.csv', delimiter=',')
 l0_n, l1_n = weights1.shape #748, 128
 l2_n, l3_n = weights3.shape #32, 10
 
-W1 = [ [ RealVal(weights1[i][j]) for j in range(l1_n) ] for i in range(l0_n) ]
-W2 = [ [ RealVal(weights2[i][j]) for j in range(l2_n) ] for i in range(l1_n) ]
-W3 = [ [ RealVal(weights3[i][j]) for j in range(l3_n) ] for i in range(l2_n) ]
+weights1 = np.transpose(weights1)
+weights2 = np.transpose(weights2)
+weights3 = np.transpose(weights3)
 
-print float(W1[l0_n - 1][l1_n - 1].as_decimal(20)), weights1[l0_n - 1][l1_n - 1]
-print float(W2[l1_n - 1][l2_n - 1].as_decimal(20)), weights2[l1_n - 1][l2_n - 1]
-print float(W3[l2_n - 1][l3_n - 1].as_decimal(20)), weights3[l2_n - 1][l3_n - 1]
+W1 = [ [ RealVal(weights1[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
+W2 = [ [ RealVal(weights2[i][j]) for j in range(l1_n) ] for i in range(l2_n) ]
+W3 = [ [ RealVal(weights3[i][j]) for j in range(l2_n) ] for i in range(l3_n) ]
+
+print float(W1[l1_n - 1][l0_n - 1].as_decimal(20)), weights1[l1_n - 1][l0_n - 1]
+print float(W2[l2_n - 1][l1_n - 1].as_decimal(20)), weights2[l2_n - 1][l1_n - 1]
+print float(W3[l3_n - 1][l2_n - 1].as_decimal(20)), weights3[l3_n - 1][l2_n - 1]
 
 print "*****Creating Biases*****"
 biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
@@ -75,16 +79,18 @@ def robust(X, Y, n):
 def unique(X, n):
   return And([X[i] != X[j] for i in range(n) for j in range(i) if j != i])
 
-def vvmul(V1, V2, n):
+def vvmul(V1, V2, bias, n):
   res = 0
   for i in range(0, n):
     res += V1[i] * V2[i]
+  res += bias
   return res
 
-def vmmul(V, M, O, n):
+# V=[1_row * m_col], M=[n_row * m_col]
+def vmmul(V, M, B, O, m, n):
   res = [None] * n
   for i in range(0, n):
-    tmp = vvmul(M[i], V, n)
+    tmp = vvmul(V, M[i], B[i], m)
     ### Use ReLU for activatation
     res[i] = (O[i] == tmp)
     #res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
@@ -94,21 +100,21 @@ def vmmul(V, M, O, n):
     #res[i] = (O[i] == approx_sigmoid(tmp))
   return res
 
-l1_x_cond = vmmul(InX, W1, L1X, l1_n)
-l2_x_cond = vmmul(L1X, W2, L2X, l2_n)
-out_x_cond = vmmul(L2X, W3, OutX, l3_n)
+l1_x_cond = vmmul(InX, W1, B1, L1X, l0_n, l1_n)
+l2_x_cond = vmmul(L1X, W2, B2, L2X, l1_n, l2_n)
+out_x_cond = vmmul(L2X, W3, B3, OutX, l2_n, l3_n)
 
-l1_y_cond = vmmul(InY, W1, L1Y, l1_n)
-l2_y_cond = vmmul(L1Y, W2, L2Y, l2_n)
-out_y_cond = vmmul(L2Y, W3, OutY, l3_n)
+l1_y_cond = vmmul(InY, W1, B1, L1Y, l0_n, l1_n)
+l2_y_cond = vmmul(L1Y, W2, B2, L2Y, l1_n, l2_n)
+out_y_cond = vmmul(L2Y, W3, B3, OutY, l2_n, l3_n)
 
 #TODO: The input pertubation constriants have to be more general
 input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < 0.0001, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
 
 # This is a necessary but not sufficient constraint for negating robustness (for classification)
 output_cond = [ Or( [ OutY[i] - OutX[i] > 1 for i in range(l3_n) ] ) ]
-# This is a precise constraint for negating robustness, but more complex to solve
-#output_cond = [ Not(robust(OutX, OutY, l3_n)) ]
+## This is a precise constraint for negating robustness, but more complex to solve
+output_cond = [ Not( robust(OutX, OutY, l3_n) ) ]
 
 s = Solver()
 s.add(l1_x_cond +
