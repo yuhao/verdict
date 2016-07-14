@@ -59,6 +59,20 @@ InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
 OutX = [ Real('outX-%s' % i) for i in range(l1_n) ]
 OutY = [ Real('outY-%s' % i) for i in range(l1_n) ]
 
+def convertToPythonNum(num):
+  if is_real(num) == True:
+    if is_rational_value(num) == True:
+      denom = num.denominator()
+      numerator = num.numerator()
+      return float(numerator.as_string()) / float(denom.as_string())
+    else:
+      approx_num = num.approx(5)
+      denom = approx_num.denominator()
+      numerator = approx_num.numerator()
+      return float(numerator.as_string()) / float(denom.as_string())
+  else:
+    return float(num.as_string())
+
 def robust(X, Y, n):
   # robust(X, Y) is equivalent to assert argmax(X) == argmax(Y). Note that if
   # there are multiple occurrences of the max value, the standard argmax will
@@ -121,12 +135,12 @@ print "\n*****Start Solving*****"
 startTime = time.time()
 result = s.check()
 duration = time.time() - startTime
+print "[Runtime]", duration
 
 if (result == sat):
   m = s.model()
   print m
-  print "argmax(OutX)", np.argmax([float(m.evaluate(OutX[i]).as_decimal(20)) for i in range(l1_n)])
-  print "argmax(OutY)", np.argmax([float(m.evaluate(OutY[i]).as_decimal(20)) for i in range(l1_n)])
+  print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)])
+  print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)])
 else:
   print s.check()
-print "[Runtime]", duration

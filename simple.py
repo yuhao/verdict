@@ -43,6 +43,20 @@ reluC = RealVal(0.01)
 set_option(rational_to_decimal=True)
 set_option("verbose", 20)
 
+def convertToPythonNum(num):
+  if is_real(num) == True:
+    if is_rational_value(num) == True:
+      denom = num.denominator()
+      numerator = num.numerator()
+      return float(numerator.as_string()) / float(denom.as_string())
+    else:
+      approx_num = num.approx(5)
+      denom = approx_num.denominator()
+      numerator = approx_num.numerator()
+      return float(numerator.as_string()) / float(denom.as_string())
+  else:
+    return float(num.as_string())
+
 def sanity(v, w1, w2, n):
   hl = [0] * n
   out = [0] * n
@@ -132,8 +146,10 @@ if (s.check() == sat):
   print "Y", [m.evaluate(Y[i]) for i in range(5)]
   print "L1-X", [m.evaluate(L1X[i]) for i in range(5)]
   print "L1-Y", [m.evaluate(L1Y[i]) for i in range(5)]
-  print "Out-X", np.argmax([float(m.evaluate(OX[i]).as_decimal(20)) for i in range(5)])
-  print "Out-Y", np.argmax([float(m.evaluate(OY[i]).as_decimal(20)) for i in range(5)])
+  print "Out-X", [float(m.evaluate(OX[i]).as_decimal(20)) for i in range(5)]
+  print "Out-Y", [float(m.evaluate(OY[i]).as_decimal(20)) for i in range(5)]
+  print "argmax(Out-X)", np.argmax([convertToPythonNum(m.evaluate(OX[i])) for i in range(5)])
+  print "argmax(Out-Y)", np.argmax([convertToPythonNum(m.evaluate(OY[i])) for i in range(5)])
   sanityCheck(X, Y, m, 5)
 else:
   print s.check()
