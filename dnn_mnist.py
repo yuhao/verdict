@@ -5,6 +5,37 @@
 from z3 import *
 import numpy as np
 import time
+import argparse
+
+parser = argparse.ArgumentParser(description="Verdict harness.")
+parser.add_argument("-i", "--input-perturbation",
+                    dest="input_pert",
+                    type=float,
+                    help="input perturbation. choose between (0, 1)",
+                    default=0.0001)
+parser.add_argument("-r", "--robustness",
+                    dest="robust_cons",
+                    help="robustness constraint. choose between <weak, medium, strong>",
+                    default="strong")
+parser.add_argument("-o", "--output-perturbation",
+                    dest="output_pert",
+                    type=int,
+                    help="output tolerance. invalid when robustness is strong",
+                    default=1)
+parser.add_argument("-a", "--activation-function",
+                    dest="act_func",
+                    help="activation function. choose between <none, relu, reluC, sigmoid, approx_sigmoid>",
+                    default="none")
+
+args = parser.parse_args()
+input_pert = args.input_pert
+robust_cons = args.robust_cons
+output_pert = args.output_pert
+act_func = args.act_func
+
+print "*****Using Parameters*****"
+for arg in vars(args):
+  print '[' + arg + ']:', getattr(args, arg)
 
 set_option(rational_to_decimal=True)
 set_option("verbose", 10)
@@ -55,6 +86,20 @@ L2Y = [ Real('l2Y-%s' % i) for i in range(l2_n) ]
 OutX = [ Real('outX-%s' % i) for i in range(l3_n) ]
 OutY = [ Real('outY-%s' % i) for i in range(l3_n) ]
 
+def convertToPythonNum(num):
+  if is_real(num) == True:
+    if is_rational_value(num) == True:
+      denom = num.denominator()
+      numerator = num.numerator()
+      return float(numerator.as_string()) / float(denom.as_string())
+    else:
+      approx_num = num.approx(5)
+      denom = approx_num.denominator()
+      numerator = approx_num.numerator()
+      return float(numerator.as_string()) / float(denom.as_string())
+  else:
+    return float(num.as_string())
+
 def sigmoid(x):
   res = 1 / (1 + natureExp**(-x))
   return res
@@ -88,17 +133,20 @@ def vvmul(V1, V2, bias, n):
 
 # V=[1_row * m_col], M=[n_row * m_col]
 def vmmul(V, M, B, O, m, n):
-  res = [None] * n
+  cond = [None] * n
   for i in range(0, n):
     tmp = vvmul(V, M[i], B[i], m)
-    ### Use ReLU for activatation
-    res[i] = (O[i] == tmp)
-    #res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
-    #res[i] = If(tmp >= 0, O[i] == tmp, O[i] == tmp * reluC)
-    ### Use sigmoid for activatation
-    #res[i] = (O[i] == sigmoid(tmp))
-    #res[i] = (O[i] == approx_sigmoid(tmp))
-  return res
+    if act_func == "relu":
+      cond[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
+    elif act_func == "reluC":
+      cond[i] = If(tmp > 0, O[i] == tmp, O[i] == tmp * reluC)
+    elif act_func == "sigmoid":
+      cond[i] = (O[i] == sigmoid(tmp))
+    elif act_func == "approx_sigmoid":
+      cond[i] = (O[i] == approx_sigmoid(tmp))
+    else:
+      cond[i] = (O[i] == tmp)
+  return cond
 
 l1_x_cond = vmmul(InX, W1, B1, L1X, l0_n, l1_n)
 l2_x_cond = vmmul(L1X, W2, B2, L2X, l1_n, l2_n)
@@ -109,12 +157,21 @@ l2_y_cond = vmmul(L1Y, W2, B2, L2Y, l1_n, l2_n)
 out_y_cond = vmmul(L2Y, W3, B3, OutY, l2_n, l3_n)
 
 #TODO: The input pertubation constriants have to be more general
-input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < 0.0001, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
+input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < input_pert, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
 
-# This is a necessary but not sufficient constraint for negating robustness (for classification)
-#output_cond = [ Or( [ OutY[i] - OutX[i] > 1 for i in range(l3_n) ] ) ]
-## This is a precise constraint for negating robustness, but more complex to solve
-output_cond = [ Not( robust(OutX, OutY, l3_n) ) ]
+if robust_cons == "weak":
+  # This is the weakest constraint. It asserts that the new output is wrong
+  # only when all labels are off by |output_pert|.
+  output_cond = [ OutY[i] - OutX[i] > output_pert for i in range(l3_n) ]
+elif robust_cons == "medium":
+  # This is stronger than the weak constraint, but is a necessary but
+  # insufficient constraint for negating robustness. It asserts an output as
+  # wrong if any of the label is off by |output_pert|.
+  output_cond = [ Or( [ OutY[i] - OutX[i] > output_pert for i in range(l3_n) ] ) ]
+else:
+  # This is the precise constraint for negating robustness (see comments for
+  # |robust| implementation for details), but more complex to solve.
+  output_cond = [ Not( robust(OutX, OutY, l3_n) ) ]
 
 s = Solver()
 s.add(l1_x_cond +
@@ -125,19 +182,19 @@ s.add(l1_x_cond +
       out_y_cond +
       input_cond +
       output_cond)
-#asserts = s.assertions()
-#print len(asserts), "constraints"
+asserts = s.assertions()
+print len(asserts), "constraints"
 
 print "*****Start Solving*****"
 startTime = time.time()
 result = s.check()
 duration = time.time() - startTime
+print "[Runtime]", duration
 
 if (result == sat):
   m = s.model()
   print m
-  print "argmax(OutX)", np.argmax([float(m.evaluate(OutX[i]).as_decimal(20)) for i in range(l1_n)])
-  print "argmax(OutY)", np.argmax([float(m.evaluate(OutY[i]).as_decimal(20)) for i in range(l1_n)])
+  print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l3_n)])
+  print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l3_n)])
 else:
   print s.check()
-print "[Runtime]", duration
