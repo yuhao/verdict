@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation 2015
 
 from z3 import *
+import sys
 
 X = [ Int('x%s' % i) for i in range(5) ]
 Y = [ Int('y%s' % i) for i in range(5) ]
@@ -39,6 +40,7 @@ natureExp = RealVal(math.e)
 reluC = RealVal(0.01)
 
 set_option(rational_to_decimal=True)
+set_option("verbose", 10)
 
 def sanity(v, w1, w2, n):
   hl = [0] * n
@@ -72,6 +74,12 @@ def sigmoid(x):
   res = 1 / (1 + natureExp**(-x))
   return res
 
+# Use the first 4 terms of the taylor series of exp
+def approx_sigmoid(x):
+  approxExp = 1 - x + x**2 / 2 - x**3/6
+  res = 1 / (1 + approxExp)
+  return res
+
 def vvmul(V1, V2, n):
   res = 0
   for i in range(0, n):
@@ -83,10 +91,11 @@ def vmmul(V, M, O, n):
   for i in range(0, n):
     ### Use ReLU for activatation
     tmp = vvmul(M[i], V, n)
+    res[i] = (O[i] == If(tmp > 0, tmp, 0))
     #res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
-    res[i] = If(tmp >= 0, O[i] == tmp, O[i] == tmp * reluC)
+    #res[i] = If(tmp >= 0, O[i] == tmp, O[i] == tmp * reluC)
     ### Use sigmoid for activatation
-    #res[i] = (O[i] == sigmoid(tmp))
+    #res[i] = (O[i] == approx_sigmoid(tmp))
   return res
 
 l1_x_cond = vmmul(X, W1, L1X, 5)
@@ -97,8 +106,13 @@ out_y_cond = vmmul(L1Y, W2, OY, 5)
 
 input_cond = [ And(0 <= Y[i] - X[i], Y[i] - X[i] < 2, 0 <= Y[i], Y[i] < 32, 0 <= X[i], X[i] < 32) for i in range(5) ]
 
-output_cond = [ (OY[i] - OX[i] > 2) for i in range(5) ]
+output_cond = [ Or(OY[0] - OX[0] > 1,
+                   OY[1] - OX[1] > 1,
+                   OY[2] - OX[2] > 1,
+                   OY[3] - OX[3] > 1,
+                   OY[4] - OX[4] > 1) ]
 
+#s = Then('simplify', 'nlsat').solver()
 s = Solver()
 s.add(l1_x_cond +
       out_x_cond +
@@ -108,6 +122,9 @@ s.add(l1_x_cond +
       output_cond)
 #for c in s.assertions():
 #  print c
+#with open("cons.out", "w") as cons_out:
+#  for c in s.assertions():
+#    cons_out.write(str(c)+"\n")
 
 if (s.check() == sat):
   m = s.model()
@@ -117,6 +134,6 @@ if (s.check() == sat):
   print "L1-Y", [m.evaluate(L1Y[i]) for i in range(5)]
   print "Out-X", [m.evaluate(OX[i]) for i in range(5)]
   print "Out-Y", [m.evaluate(OY[i]) for i in range(5)]
-  #sanityCheck(X, Y, m, 5)
+  sanityCheck(X, Y, m, 5)
 else:
   print s.check()
