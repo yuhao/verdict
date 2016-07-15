@@ -15,18 +15,18 @@ parser.add_argument("-i", "--input-perturbation",
                     default=0.0001)
 parser.add_argument("-r", "--robustness",
                     dest="robust_cons",
-                    help="robustness constraint. choose between <weak, medium, strong>",
-                    default="strong")
-parser.add_argument("-o", "--output-perturbation",
-                    dest="output_pert",
+                    help="robustness constraint. choose between <imprecise, precise>",
+                    default="precise")
+parser.add_argument("-o", "--output-bound",
+                    dest="output_bound",
                     type=int,
-                    help="output tolerance. invalid when robustness is strong",
+                    help="output bound. invalid when robustness is strong",
                     default=1)
 
 args = parser.parse_args()
 input_pert = args.input_pert
 robust_cons = args.robust_cons
-output_pert = args.output_pert
+output_bound = args.output_bound
 
 print "*****Using Parameters*****"
 for arg in vars(args):
@@ -76,14 +76,22 @@ def convertToPythonNum(num):
     return float(num.as_string())
 
 def robust(X, Y, n):
-  # robust(X, Y) is equivalent to assert argmax(X) == argmax(Y). Note that if
-  # there are multiple occurrences of the max value, the standard argmax will
-  # return only the first occurrence.  In that case, this |robust|
-  # implementation for checking robustness is incorrect. For example, if
-  # X = [4, 4, 4] and Y = [3, 5, 3], then argmax(X) is 0 and argmax(Y) is 1.
-  # In this case, argmax(X) != argmax(Y) while robust(X, Y, 3) is still true
-  # because And(X[1] >= X[0], X[1] >= X[2], Y[1] >= Y[0], Y[1] >= Y[2]) == True.
-  return Or( [ And( [ And( X[j] >= X[i], Y[j] >= Y[i] ) for i in range(n) if i != j ] ) for j in range(n) ] )
+  if robust_cons == "imprecise":
+    # This is an imprecise constraint. It asserts that a model is robust if
+    # *all* labels' errors are bound by |output_bound|. Depending on the value
+    # of |output_bound|, this constraint could be more relaxed or stricter than
+    # the precise constraint. Relaxed or strict, it is easier to solve.
+    return And( [ And(Y[i] - X[i] < output_bound, X[i] - Y[i] < output_bound) for i in range(l1_n) ] )
+  else:
+    # This is the precise constraint for robustness, but more complex to solve.
+    # It is equivalent to assert argmax(X) == argmax(Y). Note that if there are
+    # multiple occurrences of the max value, the standard argmax will return
+    # only the first occurrence.  In that case, this |robust| implementation
+    # for checking robustness is incorrect. For example, if X = [4, 4, 4] and Y
+    # = [3, 5, 3], then argmax(X) is 0 and argmax(Y) is 1.  In this case,
+    # argmax(X) != argmax(Y) while robust(X, Y, 3) is still true because
+    # And(X[1] >= X[0], X[1] >= X[2], Y[1] >= Y[0], Y[1] >= Y[2]) == True.
+    return Or( [ And( [ And( X[j] >= X[i], Y[j] >= Y[i] ) for i in range(n) if i != j ] ) for j in range(n) ] )
 
 # To Make sure all elements in X are different
 def unique(X, n):
@@ -111,19 +119,7 @@ out_y_cond = vmmul(InY, W, B, OutY, l0_n, l1_n)
 #TODO: The input pertubation constriants have to be more general
 input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < input_pert, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
 
-if robust_cons == "weak":
-  # This is the weakest constraint. It asserts that the new output is wrong
-  # only when all labels are off by |output_pert|.
-  output_cond = [ OutY[i] - OutX[i] > output_pert for i in range(l1_n) ]
-elif robust_cons == "medium":
-  # This is stronger than the weak constraint, but is a necessary but
-  # insufficient constraint for negating robustness. It asserts an output as
-  # wrong if any of the label is off by |output_pert|.
-  output_cond = [ Or( [ OutY[i] - OutX[i] > output_pert for i in range(l1_n) ] ) ]
-else:
-  # This is the precise constraint for negating robustness (see comments for
-  # |robust| implementation for details), but more complex to solve.
-  output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
+output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
 
 s = Solver()
 s.add(out_x_cond +
@@ -145,4 +141,4 @@ if (result == sat):
   print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)])
   print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)])
 else:
-  print s.check()
+  print result
