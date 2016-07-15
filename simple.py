@@ -8,10 +8,6 @@ import time
 X = [ Real('x%s' % i) for i in range(5) ]
 #X = [RealVal(0.150231045), RealVal(0.670946632), RealVal(0.038289158), RealVal(0.673947442), RealVal(0.778584339)]
 Y = [ Real('y%s' % i) for i in range(5) ]
-L1X = [ Real('l1-x-%s' % i) for i in range(5) ]
-L1Y = [ Real('l1-y-%s' % i) for i in range(5) ]
-OX = [ Real('ox%s' % i) for i in range(5) ]
-OY = [ Real('oy%s' % i) for i in range(5) ]
 W1 = [[RealVal(0.150231045), RealVal(0.670946632), RealVal(0.038289158), RealVal(0.673947442), RealVal(0.778584339)],
       [RealVal(0.609666936), RealVal(0.829361313), RealVal(0.769045319), RealVal(0.090266416), RealVal(0.611124522)],
       [RealVal(0.372291187), RealVal(0.296078870), RealVal(0.071903055), RealVal(0.329610558), RealVal(0.497106420)],
@@ -102,41 +98,33 @@ def vvmul(V1, V2, n):
     res += V1[i] * V2[i]
   return res
 
-def vmmul(V, M, O, n):
+def vmmul(V, M, n):
   res = [None] * n
   for i in range(0, n):
     ### Use ReLU for activatation
     tmp = vvmul(M[i], V, n)
-    #res[i] = (O[i] == If(tmp > 0, tmp, 0))
-    res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
-    #res[i] = If(tmp >= 0, O[i] == tmp, O[i] == tmp * reluC)
+    res[i] = If(tmp > 0, tmp, 0)
+    #res[i] = If(tmp >= 0, tmp, tmp * reluC)
     ### Use sigmoid for activatation
-    #res[i] = (O[i] == approx_sigmoid(tmp))
-    #res[i] = (O[i] == sigmoid(tmp))
+    #res[i] = approx_sigmoid(tmp)
+    #res[i] = sigmoid(tmp)
   return res
 
-l1_x_cond = vmmul(X, W1, L1X, 5)
-out_x_cond = vmmul(L1X, W2, OX, 5)
+L1X = vmmul(X, W1, 5)
+OX = vmmul(L1X, W2, 5)
 
-l1_y_cond = vmmul(Y, W1, L1Y, 5)
-out_y_cond = vmmul(L1Y, W2, OY, 5)
+L1Y = vmmul(Y, W1, 5)
+OY = vmmul(L1Y, W2, 5)
 
 input_cond = [ And(X[i] - Y[i] < 0.2, Y[i] - X[i] < 0.2, 0 <= Y[i], Y[i] <= 1, 0 <= X[i], X[i] <= 1) for i in range(5) ]
 
 output_cond = [ Not(robust(OX, OY, 5)) ]
 
 s = Solver()
-s.add(l1_x_cond +
-      out_x_cond +
-      l1_y_cond +
-      out_y_cond +
-      input_cond +
+s.add(input_cond +
       output_cond)
 #for c in s.assertions():
 #  print c
-#with open("cons.out", "w") as cons_out:
-#  for c in s.assertions():
-#    cons_out.write(str(c)+"\n")
 
 startTime = time.time()
 result = s.check()
@@ -154,3 +142,4 @@ if (result == sat):
   print "argmax(Out-X)", np.argmax([convertToPythonNum(m.evaluate(OX[i])) for i in range(5)])
   print "argmax(Out-Y)", np.argmax([convertToPythonNum(m.evaluate(OY[i])) for i in range(5)])
   #sanityCheck(X, Y, m, 5)
+  #print m
