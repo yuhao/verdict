@@ -24,14 +24,19 @@ parser.add_argument("-a", "--activation-function",
                     dest="act_func",
                     help="activation function. choose between <none, relu, reluC, sigmoid, approx_sigmoid>",
                     default="none")
+parser.add_argument("-m", "--verify-mode",
+                    dest="verify_mode",
+                    help="verification mode. choose between <general, specific>",
+                    default="general")
 
 args = parser.parse_args()
 input_bound = args.input_bound
 robust_cons = args.robust_cons
 output_bound = args.output_bound
 act_func = args.act_func
+verify_mode = args.verify_mode
 
-print "\n*****Using Parameters*****"
+print "\n=====Parameter List====="
 for arg in vars(args):
   print '[' + arg + ']:', getattr(args, arg)
 
@@ -113,7 +118,7 @@ def vmmul(V, M, B, O, m, n):
       cond[i] = (O[i] == tmp)
   return cond
 
-print "\n*****Creating Weights*****"
+print "\nCreating Weights"
 weights1 = np.genfromtxt('mnist/para/weights1.csv', delimiter=',')
 weights2 = np.genfromtxt('mnist/para/weights2.csv', delimiter=',')
 weights3 = np.genfromtxt('mnist/para/weights3.csv', delimiter=',')
@@ -129,11 +134,11 @@ W1 = [ [ RealVal(weights1[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
 W2 = [ [ RealVal(weights2[i][j]) for j in range(l1_n) ] for i in range(l2_n) ]
 W3 = [ [ RealVal(weights3[i][j]) for j in range(l2_n) ] for i in range(l3_n) ]
 
-print float(W1[l1_n - 1][l0_n - 1].as_decimal(20)), weights1[l1_n - 1][l0_n - 1]
-print float(W2[l2_n - 1][l1_n - 1].as_decimal(20)), weights2[l2_n - 1][l1_n - 1]
-print float(W3[l3_n - 1][l2_n - 1].as_decimal(20)), weights3[l3_n - 1][l2_n - 1]
+#print float(W1[l1_n - 1][l0_n - 1].as_decimal(20)), weights1[l1_n - 1][l0_n - 1]
+#print float(W2[l2_n - 1][l1_n - 1].as_decimal(20)), weights2[l2_n - 1][l1_n - 1]
+#print float(W3[l3_n - 1][l2_n - 1].as_decimal(20)), weights3[l3_n - 1][l2_n - 1]
 
-print "\n*****Creating Biases*****"
+print "Creating Biases"
 biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
 biases2 = np.genfromtxt('mnist/para/biases2.csv', delimiter=',')
 biases3 = np.genfromtxt('mnist/para/biases3.csv', delimiter=',')
@@ -142,12 +147,24 @@ B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
 B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
 B3 = [ RealVal(biases3[i]) for i in range(l3_n) ]
 
-print float(B1[l1_n - 1].as_decimal(20)), biases1[l1_n - 1]
-print float(B2[l2_n - 1].as_decimal(20)), biases2[l2_n - 1]
-print float(B3[l3_n - 1].as_decimal(20)), biases3[l3_n - 1]
+#print float(B1[l1_n - 1].as_decimal(20)), biases1[l1_n - 1]
+#print float(B2[l2_n - 1].as_decimal(20)), biases2[l2_n - 1]
+#print float(B3[l3_n - 1].as_decimal(20)), biases3[l3_n - 1]
 
-print "\n*****Creating Assertions*****"
-InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
+if verify_mode == "specific":
+  print "Reading Inputs"
+  inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
+
+  # The MNIST data set has 10,000 images for testing
+  #num_imgs = 100
+  #InX = [ [ RealVal(inputs[j][i]) for i in range(l0_n) ] for j in range(num_imgs) ]
+  InX = [ RealVal(inputs[0][i]) for i in range(l0_n) ]
+
+  #print float(InX[0][l0_n - 1].as_decimal(20)), inputs[0][l0_n - 1]
+  #print float(InX[num_imgs - 1][l0_n - 1].as_decimal(20)), inputs[num_imgs - 1][l0_n - 1]
+else:
+  InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
+
 InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
 L1X = [ Real('l1X-%s' % i) for i in range(l1_n) ]
 L1Y = [ Real('l1Y-%s' % i) for i in range(l1_n) ]
@@ -156,6 +173,7 @@ L2Y = [ Real('l2Y-%s' % i) for i in range(l2_n) ]
 OutX = [ Real('outX-%s' % i) for i in range(l3_n) ]
 OutY = [ Real('outY-%s' % i) for i in range(l3_n) ]
 
+print "Creating Assertions"
 l1_x_cond = vmmul(InX, W1, B1, L1X, l0_n, l1_n)
 l2_x_cond = vmmul(L1X, W2, B2, L2X, l1_n, l2_n)
 out_x_cond = vmmul(L2X, W3, B3, OutX, l2_n, l3_n)
@@ -178,14 +196,14 @@ s.add(l1_x_cond +
       out_y_cond +
       input_cond +
       output_cond)
-asserts = s.assertions()
-print len(asserts), "constraints"
+#asserts = s.assertions()
+#print len(asserts), "constraints"
 
-print "\n*****Start Solving*****"
+print "=====Start Solving====="
 startTime = time.time()
 result = s.check()
 duration = time.time() - startTime
-print "[Runtime] %.2f %s" % (duration, result)
+print "[Solver Runtime] %.2f %s" % (duration, result)
 
 if (result == sat):
   m = s.model()
