@@ -81,7 +81,7 @@ def robust(X, Y, n):
     # *all* labels' errors are bound by |output_bound|. Depending on the value
     # of |output_bound|, this constraint could be more relaxed or stricter than
     # the precise constraint. Relaxed or strict, it is easier to solve.
-    return And( [ And(Y[i] - X[i] < output_bound, X[i] - Y[i] < output_bound) for i in range(l1_n) ] )
+    return And( [ And(Y[i] - X[i] < output_bound, X[i] - Y[i] < output_bound) for i in range(n) ] )
   else:
     # This is the precise constraint for robustness, but more complex to solve.
     # It is equivalent to assert argmax(X) == argmax(Y). Note that if there are
