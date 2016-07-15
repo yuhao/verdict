@@ -1,5 +1,3 @@
-# Copyright (c) Microsoft Corporation 2015
-
 #inputL(l0) --> hiddenL1(l1) --> hiddenL2(l2) --> outputL(l3)
 
 from z3 import *
@@ -9,7 +7,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Verdict harness.")
 parser.add_argument("-i", "--input-perturbation",
-                    dest="input_pert",
+                    dest="input_bound",
                     type=float,
                     help="input perturbation. choose between (0, 1)",
                     default=0.0001)
@@ -28,7 +26,7 @@ parser.add_argument("-a", "--activation-function",
                     default="none")
 
 args = parser.parse_args()
-input_pert = args.input_pert
+input_bound = args.input_bound
 robust_cons = args.robust_cons
 output_bound = args.output_bound
 act_func = args.act_func
@@ -42,49 +40,6 @@ set_option("verbose", 10)
 
 natureExp = RealVal(math.e)
 reluC = RealVal(0.01)
-
-print "\n*****Creating Weights*****"
-weights1 = np.genfromtxt('mnist/para/weights1.csv', delimiter=',')
-weights2 = np.genfromtxt('mnist/para/weights2.csv', delimiter=',')
-weights3 = np.genfromtxt('mnist/para/weights3.csv', delimiter=',')
-
-l0_n, l1_n = weights1.shape #748, 128
-l2_n, l3_n = weights3.shape #32, 10
-
-weights1 = np.transpose(weights1)
-weights2 = np.transpose(weights2)
-weights3 = np.transpose(weights3)
-
-W1 = [ [ RealVal(weights1[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
-W2 = [ [ RealVal(weights2[i][j]) for j in range(l1_n) ] for i in range(l2_n) ]
-W3 = [ [ RealVal(weights3[i][j]) for j in range(l2_n) ] for i in range(l3_n) ]
-
-print float(W1[l1_n - 1][l0_n - 1].as_decimal(20)), weights1[l1_n - 1][l0_n - 1]
-print float(W2[l2_n - 1][l1_n - 1].as_decimal(20)), weights2[l2_n - 1][l1_n - 1]
-print float(W3[l3_n - 1][l2_n - 1].as_decimal(20)), weights3[l3_n - 1][l2_n - 1]
-
-print "\n*****Creating Biases*****"
-biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
-biases2 = np.genfromtxt('mnist/para/biases2.csv', delimiter=',')
-biases3 = np.genfromtxt('mnist/para/biases3.csv', delimiter=',')
-
-B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
-B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
-B3 = [ RealVal(biases3[i]) for i in range(l3_n) ]
-
-print float(B1[l1_n - 1].as_decimal(20)), biases1[l1_n - 1]
-print float(B2[l2_n - 1].as_decimal(20)), biases2[l2_n - 1]
-print float(B3[l3_n - 1].as_decimal(20)), biases3[l3_n - 1]
-
-print "\n*****Creating Assertions*****"
-InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
-InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
-L1X = [ Real('l1X-%s' % i) for i in range(l1_n) ]
-L1Y = [ Real('l1Y-%s' % i) for i in range(l1_n) ]
-L2X = [ Real('l2X-%s' % i) for i in range(l2_n) ]
-L2Y = [ Real('l2Y-%s' % i) for i in range(l2_n) ]
-OutX = [ Real('outX-%s' % i) for i in range(l3_n) ]
-OutY = [ Real('outY-%s' % i) for i in range(l3_n) ]
 
 def convertToPythonNum(num):
   if is_real(num) == True:
@@ -158,6 +113,49 @@ def vmmul(V, M, B, O, m, n):
       cond[i] = (O[i] == tmp)
   return cond
 
+print "\n*****Creating Weights*****"
+weights1 = np.genfromtxt('mnist/para/weights1.csv', delimiter=',')
+weights2 = np.genfromtxt('mnist/para/weights2.csv', delimiter=',')
+weights3 = np.genfromtxt('mnist/para/weights3.csv', delimiter=',')
+
+l0_n, l1_n = weights1.shape #748, 128
+l2_n, l3_n = weights3.shape #32, 10
+
+weights1 = np.transpose(weights1)
+weights2 = np.transpose(weights2)
+weights3 = np.transpose(weights3)
+
+W1 = [ [ RealVal(weights1[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
+W2 = [ [ RealVal(weights2[i][j]) for j in range(l1_n) ] for i in range(l2_n) ]
+W3 = [ [ RealVal(weights3[i][j]) for j in range(l2_n) ] for i in range(l3_n) ]
+
+print float(W1[l1_n - 1][l0_n - 1].as_decimal(20)), weights1[l1_n - 1][l0_n - 1]
+print float(W2[l2_n - 1][l1_n - 1].as_decimal(20)), weights2[l2_n - 1][l1_n - 1]
+print float(W3[l3_n - 1][l2_n - 1].as_decimal(20)), weights3[l3_n - 1][l2_n - 1]
+
+print "\n*****Creating Biases*****"
+biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
+biases2 = np.genfromtxt('mnist/para/biases2.csv', delimiter=',')
+biases3 = np.genfromtxt('mnist/para/biases3.csv', delimiter=',')
+
+B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
+B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
+B3 = [ RealVal(biases3[i]) for i in range(l3_n) ]
+
+print float(B1[l1_n - 1].as_decimal(20)), biases1[l1_n - 1]
+print float(B2[l2_n - 1].as_decimal(20)), biases2[l2_n - 1]
+print float(B3[l3_n - 1].as_decimal(20)), biases3[l3_n - 1]
+
+print "\n*****Creating Assertions*****"
+InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
+InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
+L1X = [ Real('l1X-%s' % i) for i in range(l1_n) ]
+L1Y = [ Real('l1Y-%s' % i) for i in range(l1_n) ]
+L2X = [ Real('l2X-%s' % i) for i in range(l2_n) ]
+L2Y = [ Real('l2Y-%s' % i) for i in range(l2_n) ]
+OutX = [ Real('outX-%s' % i) for i in range(l3_n) ]
+OutY = [ Real('outY-%s' % i) for i in range(l3_n) ]
+
 l1_x_cond = vmmul(InX, W1, B1, L1X, l0_n, l1_n)
 l2_x_cond = vmmul(L1X, W2, B2, L2X, l1_n, l2_n)
 out_x_cond = vmmul(L2X, W3, B3, OutX, l2_n, l3_n)
@@ -167,7 +165,7 @@ l2_y_cond = vmmul(L1Y, W2, B2, L2Y, l1_n, l2_n)
 out_y_cond = vmmul(L2Y, W3, B3, OutY, l2_n, l3_n)
 
 #TODO: The input pertubation constriants have to be more general
-input_cond = [ And(0 < InY[i] - InX[i], InY[i] - InX[i] < input_pert, 0 < InY[i], InY[i] < 1, 0 < InX[i], InX[i] < 1) for i in range(l0_n) ]
+input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
 
 output_cond = [ Not( robust(OutX, OutY, l3_n) ) ]
 
@@ -187,12 +185,10 @@ print "\n*****Start Solving*****"
 startTime = time.time()
 result = s.check()
 duration = time.time() - startTime
-print "[Runtime]", duration
+print "[Runtime] %.2f %s" % (duration, result)
 
 if (result == sat):
   m = s.model()
   print m
   print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l3_n)])
   print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l3_n)])
-else:
-  print result
