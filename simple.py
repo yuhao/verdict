@@ -3,25 +3,20 @@
 from z3 import *
 import sys
 import numpy as np
+import time
 
-X = [ Int('x%s' % i) for i in range(5) ]
-Y = [ Int('y%s' % i) for i in range(5) ]
+X = [ Real('x%s' % i) for i in range(5) ]
+#X = [RealVal(0.150231045), RealVal(0.670946632), RealVal(0.038289158), RealVal(0.673947442), RealVal(0.778584339)]
+Y = [ Real('y%s' % i) for i in range(5) ]
 L1X = [ Real('l1-x-%s' % i) for i in range(5) ]
 L1Y = [ Real('l1-y-%s' % i) for i in range(5) ]
 OX = [ Real('ox%s' % i) for i in range(5) ]
 OY = [ Real('oy%s' % i) for i in range(5) ]
-###This weight matrix leads to sat, i.e., the model is not robust
 W1 = [[RealVal(0.150231045), RealVal(0.670946632), RealVal(0.038289158), RealVal(0.673947442), RealVal(0.778584339)],
       [RealVal(0.609666936), RealVal(0.829361313), RealVal(0.769045319), RealVal(0.090266416), RealVal(0.611124522)],
       [RealVal(0.372291187), RealVal(0.296078870), RealVal(0.071903055), RealVal(0.329610558), RealVal(0.497106420)],
       [RealVal(0.956393326), RealVal(0.798037186), RealVal(0.286287309), RealVal(0.674712053), RealVal(0.840121924)],
       [RealVal(0.627576681), RealVal(0.975366059), RealVal(0.809793115), RealVal(0.538486285), RealVal(0.508208182)]]
-###This weight matrix leads to unsat, i.e., the model is robust
-#W1 = [[RealVal(0.898798758), RealVal(0.737760202), RealVal(-0.340628972), RealVal(0.359962019), RealVal(-0.653788730)],
-#      [RealVal(0.286695467), RealVal(0.636300932), RealVal(0.308495501), RealVal(-0.280221795), RealVal(0.227396977)],
-#      [RealVal(0.347919571), RealVal(-0.014086935), RealVal(-0.890731476), RealVal(0.319317432), RealVal(0.445368357)],
-#      [RealVal(-0.664655216), RealVal(-0.902996018), RealVal(-0.062735416), RealVal(-0.328387565), RealVal(-0.455935177)],
-#      [RealVal(0.787489188), RealVal(0.729626432), RealVal(-0.762977967), RealVal(0.393125952), RealVal(-0.250256052)]]
 W2 = [[RealVal(0.296015539), RealVal(0.298796651), RealVal(0.218944852), RealVal(0.194505800), RealVal(0.737771838)],
       [RealVal(0.333778784), RealVal(0.905985998), RealVal(0.673450123), RealVal(0.823922821), RealVal(0.049145588)],
       [RealVal(0.049989531), RealVal(0.189385222), RealVal(0.613595088), RealVal(0.763298634), RealVal(0.432115047)],
@@ -41,23 +36,26 @@ natureExp = RealVal(math.e)
 reluC = RealVal(0.01)
 
 set_option(rational_to_decimal=True)
-set_option("verbose", 20)
+set_option("verbose", 10)
 
 def convertToPythonNum(num):
   if is_real(num) == True:
     if is_rational_value(num) == True:
-      denom = num.denominator()
-      numerator = num.numerator()
-      return float(numerator.as_string()) / float(denom.as_string())
+      if num.as_decimal(10).endswith('?'):
+        return float(num.as_decimal(10)[:-1])
+      else:
+        return float(num.as_decimal(10))
     else:
+      # |approx_num| is the approx rational of the irrational |num|
+      # |approx_num| is guaranteed to end with a '?'
       approx_num = num.approx(5)
-      denom = approx_num.denominator()
-      numerator = approx_num.numerator()
-      return float(numerator.as_string()) / float(denom.as_string())
+      return float(approx_num.as_decimal(10)[:-1])
   else:
     return float(num.as_string())
 
 def sanity(v, w1, w2, n):
+  # This just uses ReLU, so sanity check won't return
+  # correct results for other activation functions.
   hl = [0] * n
   out = [0] * n
   for i in range(n):
@@ -75,10 +73,10 @@ def sanity(v, w1, w2, n):
 def sanityCheck(X, Y, m, n):
   valueX = [0] * n
   for i in range(n):
-    valueX[i] = m.evaluate(X[i]).as_long()
+    valueX[i] = convertToPythonNum(m.evaluate(X[i]))
   valueY = [0] * n
   for i in range(n):
-    valueY[i] = m.evaluate(Y[i]).as_long()
+    valueY[i] = convertToPythonNum(m.evaluate(Y[i]))
 
   sanityOutX = sanity(valueX, valueW1, valueW2, n)
   sanityOutY = sanity(valueY, valueW1, valueW2, n)
@@ -109,11 +107,12 @@ def vmmul(V, M, O, n):
   for i in range(0, n):
     ### Use ReLU for activatation
     tmp = vvmul(M[i], V, n)
-    res[i] = (O[i] == If(tmp > 0, tmp, 0))
-    #res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
+    #res[i] = (O[i] == If(tmp > 0, tmp, 0))
+    res[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
     #res[i] = If(tmp >= 0, O[i] == tmp, O[i] == tmp * reluC)
     ### Use sigmoid for activatation
     #res[i] = (O[i] == approx_sigmoid(tmp))
+    #res[i] = (O[i] == sigmoid(tmp))
   return res
 
 l1_x_cond = vmmul(X, W1, L1X, 5)
@@ -122,11 +121,10 @@ out_x_cond = vmmul(L1X, W2, OX, 5)
 l1_y_cond = vmmul(Y, W1, L1Y, 5)
 out_y_cond = vmmul(L1Y, W2, OY, 5)
 
-input_cond = [ And(0 < Y[i] - X[i], Y[i] - X[i] < 2, 0 <= Y[i], Y[i] < 32, 0 <= X[i], X[i] < 32) for i in range(5) ]
+input_cond = [ And(X[i] - Y[i] < 0.2, Y[i] - X[i] < 0.2, 0 <= Y[i], Y[i] <= 1, 0 <= X[i], X[i] <= 1) for i in range(5) ]
 
 output_cond = [ Not(robust(OX, OY, 5)) ]
 
-#s = Then('simplify', 'nlsat').solver()
 s = Solver()
 s.add(l1_x_cond +
       out_x_cond +
@@ -140,16 +138,19 @@ s.add(l1_x_cond +
 #  for c in s.assertions():
 #    cons_out.write(str(c)+"\n")
 
-if (s.check() == sat):
+startTime = time.time()
+result = s.check()
+duration = time.time() - startTime
+print "[Solver Runtime] %.2f %s" % (duration, result)
+
+if (result == sat):
   m = s.model()
   print "X", [m.evaluate(X[i]) for i in range(5)]
   print "Y", [m.evaluate(Y[i]) for i in range(5)]
   print "L1-X", [m.evaluate(L1X[i]) for i in range(5)]
   print "L1-Y", [m.evaluate(L1Y[i]) for i in range(5)]
-  print "Out-X", [float(m.evaluate(OX[i]).as_decimal(20)) for i in range(5)]
-  print "Out-Y", [float(m.evaluate(OY[i]).as_decimal(20)) for i in range(5)]
+  print "Out-X", [m.evaluate(OX[i]) for i in range(5)]
+  print "Out-Y", [m.evaluate(OY[i]) for i in range(5)]
   print "argmax(Out-X)", np.argmax([convertToPythonNum(m.evaluate(OX[i])) for i in range(5)])
   print "argmax(Out-Y)", np.argmax([convertToPythonNum(m.evaluate(OY[i])) for i in range(5)])
-  sanityCheck(X, Y, m, 5)
-else:
-  print s.check()
+  #sanityCheck(X, Y, m, 5)
