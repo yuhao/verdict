@@ -110,6 +110,13 @@ def vmmul(V, M, n):
     #res[i] = sigmoid(tmp)
   return res
 
+def genCExp(m):
+  with file('cexp.csv', 'w') as outfile:
+    inx = [convertToPythonNum(m.evaluate(X[i])) for i in range(5)]
+    np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
+    iny = [convertToPythonNum(m.evaluate(Y[i])) for i in range(5)]
+    np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
+
 L1X = vmmul(X, W1, 5)
 OX = vmmul(L1X, W2, 5)
 
@@ -143,3 +150,4 @@ if (result == sat):
   print "argmax(Out-Y)", np.argmax([convertToPythonNum(m.evaluate(OY[i])) for i in range(5)])
   #sanityCheck(X, Y, m, 5)
   #print m
+  genCExp(m)

@@ -96,6 +96,13 @@ def vmmul(V, M, B, m, n):
     res[i] = vvmul(V, M[i], B[i], m)
   return res
 
+def genCExp(m):
+  with file('cexp.csv', 'w') as outfile:
+    inx = [convertToPythonNum(m.evaluate(InX[i])) for i in range(l0_n)]
+    np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
+    iny = [convertToPythonNum(m.evaluate(InY[i])) for i in range(l0_n)]
+    np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
+
 def solveIt():
   startTime = time.time()
   result = s.check()
@@ -107,6 +114,7 @@ def solveIt():
     #print m
     print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)])
     print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)])
+    genCExp(m)
 
 print "\nCreating Weights"
 weights = np.genfromtxt('mnist/para/softmax_weights.csv', delimiter=',')
