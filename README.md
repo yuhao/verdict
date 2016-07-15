@@ -7,7 +7,18 @@ Our mission is to build systems that enable safe and robust machine learning, th
 
 ##State of the Project
 
-As of now, this project has a formal verifier for verifying the robustness of a machine learning model. This is a living document of the project. It might be messy and is constantly being updated. More goals will be defined and more systems will be developed as we get a deeper understanding of the problem space.
+As of now, this project has a formal verifier for verifying the *robustness* of a machine learning model. This is a living document of the project. It might be messy and is constantly being updated. More goals will be defined and more systems will be developed as we get a deeper understanding of the problem space.
+
+###What is a Robust Model
+
+Informally, a robust machine learning model should produce same or very close predictions for inputs that are very similar to each other. For example, an image classification model should produce the same label for an image even if the image is slightly perturbated. Formally, we want to make sure:
+
+```
+\forany x, |x - x'| < \delta --> |f(x) - f(x')| < \theta
+```
+where `\delta` and `\theta` are parameters to control the perturbation and robustness, respectively. `-->` denotes the logic implication operator.
+
+Note that this is just one intuitive definition of robustness. One could argue that a robust model should also guarantee `\forany x, |f(x) - f(x')| < \theta --> |x - x'| < \delta`. That is, if two predictions are close enough, their corresponding inputs should not be too different. However, one could further argue that if a model can correctly label two seemingly completely different inputs as the same thing, then that model is robust because it is not easily fooled! See [this](http://arxiv.org/pdf/1412.1897v4.pdf) paper for a concrete example. The exact definition of robustness can vary, and the verifier should be general enough to handle different cases.
 
 ###Dependencies
 1. [Z3 theorem prover](https://github.com/Z3Prover/z3). Follow its installation instructions. You will need it to run the formal verifier. Remember to build its python binding.
