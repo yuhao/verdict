@@ -62,14 +62,16 @@ OutY = [ Real('outY-%s' % i) for i in range(l1_n) ]
 def convertToPythonNum(num):
   if is_real(num) == True:
     if is_rational_value(num) == True:
-      denom = num.denominator()
-      numerator = num.numerator()
-      return float(numerator.as_string()) / float(denom.as_string())
+      # 1 doesn't end with '?'
+      if num.as_decimal(10).endswith('?'):
+        return float(num.as_decimal(10)[:-1])
+      else:
+        return float(num.as_decimal(10))
     else:
+      # |approx_num| is the approx rational of the irrational |num|
+      # |approx_num| is guaranteed to end with a '?'
       approx_num = num.approx(5)
-      denom = approx_num.denominator()
-      numerator = approx_num.numerator()
-      return float(numerator.as_string()) / float(denom.as_string())
+      return float(approx_num.as_decimal(10)[:-1])
   else:
     return float(num.as_string())
 
