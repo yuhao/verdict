@@ -24,12 +24,18 @@ parser.add_argument("-m", "--verify-mode",
                     dest="verify_mode",
                     help="verification mode. choose between <general, specific>",
                     default="general")
+parser.add_argument("-c", "--input-id",
+                    dest="input_id",
+                    type=int,
+                    help="input id. used in the specific mode",
+                    default=0)
 
 args = parser.parse_args()
 input_bound = args.input_bound
 robust_cons = args.robust_cons
 output_bound = args.output_bound
 verify_mode = args.verify_mode
+input_id = args.input_id
 
 print "\n=====Parameter List====="
 for arg in vars(args):
@@ -84,15 +90,13 @@ def vvmul(V1, V2, bias, n):
   return res
 
 # V=[1_row * m_col], M=[n_row * m_col]
-def vmmul(V, M, B, O, m, n):
+def vmmul(V, M, B, m, n):
   res = [None] * n
   for i in range(0, n):
-    #res[i] = vvmul(V, M[i], B[i], m)
-    res[i] = (O[i] == vvmul(V, M[i], B[i], m))
+    res[i] = vvmul(V, M[i], B[i], m)
   return res
 
-def solveIt(s):
-  #print "=====Start Solving====="
+def solveIt():
   startTime = time.time()
   result = s.check()
   duration = time.time() - startTime
@@ -119,25 +123,17 @@ print "Creating Assertions"
 if verify_mode == "specific":
   # The MNIST data set has 10,000 images for testing
   inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
-  InX = [ RealVal(inputs[0][i]) for i in range(l0_n) ]
+  InX = [ RealVal(inputs[input_id][i]) for i in range(l0_n) ]
 else:
   InX= [ Real('inX-%s' % i) for i in range(l0_n) ]
 InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
-OutX = [ Real('outX-%s' % i) for i in range(l1_n) ]
-OutY = [ Real('outY-%s' % i) for i in range(l1_n) ]
 
-#OutX = vmmul(InX, W, B, l0_n, l1_n)
-#OutY = vmmul(InY, W, B, l0_n, l1_n)
-out_x_cond = vmmul(InX, W, B, OutX, l0_n, l1_n)
-out_y_cond = vmmul(InY, W, B, OutY, l0_n, l1_n)
+OutX = vmmul(InX, W, B, l0_n, l1_n)
+OutY = vmmul(InY, W, B, l0_n, l1_n)
 input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
 output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
 
 s = Solver()
-s.add(out_x_cond +
-      out_y_cond +
-      input_cond +
+s.add(input_cond +
       output_cond)
-#s.add(input_cond +
-#      output_cond)
-solveIt(s)
+solveIt()
