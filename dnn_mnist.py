@@ -102,21 +102,33 @@ def vvmul(V1, V2, bias, n):
   return res
 
 # V=[1_row * m_col], M=[n_row * m_col]
-def vmmul(V, M, B, O, m, n):
+def vmmul(V, M, B, m, n):
   cond = [None] * n
   for i in range(0, n):
     tmp = vvmul(V, M[i], B[i], m)
     if act_func == "relu":
-      cond[i] = If(tmp > 0, O[i] == tmp, O[i] == 0)
+      cond[i] = If(tmp > 0, tmp, 0)
     elif act_func == "reluC":
-      cond[i] = If(tmp > 0, O[i] == tmp, O[i] == tmp * reluC)
+      cond[i] = If(tmp > 0, tmp, tmp * reluC)
     elif act_func == "sigmoid":
-      cond[i] = (O[i] == sigmoid(tmp))
+      cond[i] = sigmoid(tmp)
     elif act_func == "approx_sigmoid":
-      cond[i] = (O[i] == approx_sigmoid(tmp))
+      cond[i] = approx_sigmoid(tmp)
     else:
-      cond[i] = (O[i] == tmp)
+      cond[i] = tmp
   return cond
+
+def solveIt(n):
+  startTime = time.time()
+  result = s.check()
+  duration = time.time() - startTime
+  print "[Solver Runtime] %.2f %s" % (duration, result)
+
+  if (result == sat):
+    m = s.model()
+    #print m
+    print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(n)])
+    print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(n)])
 
 print "\nCreating Weights"
 weights1 = np.genfromtxt('mnist/para/weights1.csv', delimiter=',')
@@ -134,10 +146,6 @@ W1 = [ [ RealVal(weights1[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
 W2 = [ [ RealVal(weights2[i][j]) for j in range(l1_n) ] for i in range(l2_n) ]
 W3 = [ [ RealVal(weights3[i][j]) for j in range(l2_n) ] for i in range(l3_n) ]
 
-#print float(W1[l1_n - 1][l0_n - 1].as_decimal(20)), weights1[l1_n - 1][l0_n - 1]
-#print float(W2[l2_n - 1][l1_n - 1].as_decimal(20)), weights2[l2_n - 1][l1_n - 1]
-#print float(W3[l3_n - 1][l2_n - 1].as_decimal(20)), weights3[l3_n - 1][l2_n - 1]
-
 print "Creating Biases"
 biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
 biases2 = np.genfromtxt('mnist/para/biases2.csv', delimiter=',')
@@ -147,40 +155,25 @@ B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
 B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
 B3 = [ RealVal(biases3[i]) for i in range(l3_n) ]
 
-#print float(B1[l1_n - 1].as_decimal(20)), biases1[l1_n - 1]
-#print float(B2[l2_n - 1].as_decimal(20)), biases2[l2_n - 1]
-#print float(B3[l3_n - 1].as_decimal(20)), biases3[l3_n - 1]
-
+print "Creating Assertions"
 if verify_mode == "specific":
-  print "Reading Inputs"
   inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
 
   # The MNIST data set has 10,000 images for testing
   #num_imgs = 100
   #InX = [ [ RealVal(inputs[j][i]) for i in range(l0_n) ] for j in range(num_imgs) ]
   InX = [ RealVal(inputs[0][i]) for i in range(l0_n) ]
-
-  #print float(InX[0][l0_n - 1].as_decimal(20)), inputs[0][l0_n - 1]
-  #print float(InX[num_imgs - 1][l0_n - 1].as_decimal(20)), inputs[num_imgs - 1][l0_n - 1]
 else:
   InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
-
 InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
-L1X = [ Real('l1X-%s' % i) for i in range(l1_n) ]
-L1Y = [ Real('l1Y-%s' % i) for i in range(l1_n) ]
-L2X = [ Real('l2X-%s' % i) for i in range(l2_n) ]
-L2Y = [ Real('l2Y-%s' % i) for i in range(l2_n) ]
-OutX = [ Real('outX-%s' % i) for i in range(l3_n) ]
-OutY = [ Real('outY-%s' % i) for i in range(l3_n) ]
 
-print "Creating Assertions"
-l1_x_cond = vmmul(InX, W1, B1, L1X, l0_n, l1_n)
-l2_x_cond = vmmul(L1X, W2, B2, L2X, l1_n, l2_n)
-out_x_cond = vmmul(L2X, W3, B3, OutX, l2_n, l3_n)
+L1X = vmmul(InX, W1, B1, l0_n, l1_n)
+L2X = vmmul(L1X, W2, B2, l1_n, l2_n)
+OutX = vmmul(L2X, W3, B3, l2_n, l3_n)
 
-l1_y_cond = vmmul(InY, W1, B1, L1Y, l0_n, l1_n)
-l2_y_cond = vmmul(L1Y, W2, B2, L2Y, l1_n, l2_n)
-out_y_cond = vmmul(L2Y, W3, B3, OutY, l2_n, l3_n)
+L1Y = vmmul(InY, W1, B1, l0_n, l1_n)
+L2Y = vmmul(L1Y, W2, B2, l1_n, l2_n)
+OutY = vmmul(L2Y, W3, B3, l2_n, l3_n)
 
 #TODO: The input pertubation constriants have to be more general
 input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
@@ -188,25 +181,7 @@ input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound,
 output_cond = [ Not( robust(OutX, OutY, l3_n) ) ]
 
 s = Solver()
-s.add(l1_x_cond +
-      l2_x_cond +
-      out_x_cond +
-      l1_y_cond +
-      l2_y_cond +
-      out_y_cond +
-      input_cond +
+s.add(input_cond +
       output_cond)
-#asserts = s.assertions()
-#print len(asserts), "constraints"
+solveIt(l3_n)
 
-print "=====Start Solving====="
-startTime = time.time()
-result = s.check()
-duration = time.time() - startTime
-print "[Solver Runtime] %.2f %s" % (duration, result)
-
-if (result == sat):
-  m = s.model()
-  print m
-  print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l3_n)])
-  print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l3_n)])
