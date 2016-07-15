@@ -87,8 +87,8 @@ def vvmul(V1, V2, bias, n):
 def vmmul(V, M, B, O, m, n):
   res = [None] * n
   for i in range(0, n):
-    tmp = vvmul(V, M[i], B[i], m)
-    res[i] = (O[i] == tmp)
+    #res[i] = vvmul(V, M[i], B[i], m)
+    res[i] = (O[i] == vvmul(V, M[i], B[i], m))
   return res
 
 def solveIt(s):
@@ -126,6 +126,8 @@ InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
 OutX = [ Real('outX-%s' % i) for i in range(l1_n) ]
 OutY = [ Real('outY-%s' % i) for i in range(l1_n) ]
 
+#OutX = vmmul(InX, W, B, l0_n, l1_n)
+#OutY = vmmul(InY, W, B, l0_n, l1_n)
 out_x_cond = vmmul(InX, W, B, OutX, l0_n, l1_n)
 out_y_cond = vmmul(InY, W, B, OutY, l0_n, l1_n)
 input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
@@ -133,7 +135,9 @@ output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
 
 s = Solver()
 s.add(out_x_cond +
-      out_y_cond+
+      out_y_cond +
       input_cond +
       output_cond)
+#s.add(input_cond +
+#      output_cond)
 solveIt(s)
