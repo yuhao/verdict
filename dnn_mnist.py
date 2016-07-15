@@ -103,20 +103,20 @@ def vvmul(V1, V2, bias, n):
 
 # V=[1_row * m_col], M=[n_row * m_col]
 def vmmul(V, M, B, m, n):
-  cond = [None] * n
+  res = [None] * n
   for i in range(0, n):
     tmp = vvmul(V, M[i], B[i], m)
     if act_func == "relu":
-      cond[i] = If(tmp > 0, tmp, 0)
+      res[i] = If(tmp > 0, tmp, 0)
     elif act_func == "reluC":
-      cond[i] = If(tmp > 0, tmp, tmp * reluC)
+      res[i] = If(tmp > 0, tmp, tmp * reluC)
     elif act_func == "sigmoid":
-      cond[i] = sigmoid(tmp)
+      res[i] = sigmoid(tmp)
     elif act_func == "approx_sigmoid":
-      cond[i] = approx_sigmoid(tmp)
+      res[i] = approx_sigmoid(tmp)
     else:
-      cond[i] = tmp
-  return cond
+      res[i] = tmp
+  return res
 
 def solveIt(n):
   startTime = time.time()
