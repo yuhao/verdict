@@ -18,7 +18,7 @@ parser.add_argument("-r", "--robustness",
 parser.add_argument("-o", "--output-bound",
                     dest="output_bound",
                     type=int,
-                    help="output bound. invalid when robustness is strong",
+                    help="output bound. invalid when robustness is precise",
                     default=1)
 parser.add_argument("-a", "--activation-function",
                     dest="act_func",
