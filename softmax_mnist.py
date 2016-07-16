@@ -8,9 +8,9 @@ import argparse
 parser = argparse.ArgumentParser(description="Verdict harness.")
 parser.add_argument("-i", "--input-perturbation",
                     dest="input_bound",
-                    type=float,
-                    help="input perturbation. choose between (0, 1)",
-                    default=0.004)
+                    type=int,
+                    help="input perturbation. choose between (0, 255)",
+                    default=4)
 parser.add_argument("-r", "--robustness",
                     dest="robust_cons",
                     help="robustness constraint. choose between <imprecise, precise>",
@@ -43,6 +43,13 @@ for arg in vars(args):
 
 set_option(rational_to_decimal=True)
 set_option("verbose", 10)
+
+def scaleInput(X, scale, n):
+  # x is an Int array, scale is Real, res will be a Real array
+  res = [None] * n
+  for i in range(n):
+    res[i] = X[i] / scale
+  return res
 
 def convertToPythonNum(num):
   if is_real(num) == True:
@@ -98,9 +105,9 @@ def vmmul(V, M, B, m, n):
 
 def genCExp(m):
   with file('cexp.csv', 'w') as outfile:
-    inx = [convertToPythonNum(m.evaluate(InX[i])) for i in range(l0_n)]
+    inx = [convertToPythonNum(m.evaluate(X[i])) for i in range(l0_n)]
     np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
-    iny = [convertToPythonNum(m.evaluate(InY[i])) for i in range(l0_n)]
+    iny = [convertToPythonNum(m.evaluate(Y[i])) for i in range(l0_n)]
     np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
 
 def solveIt():
@@ -112,11 +119,11 @@ def solveIt():
   if (result == sat):
     m = s.model()
     #print m
-    #print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)])
-    #print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)])
+    print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)])
+    print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)])
     print "(OutX)", [convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)]
     print "(OutY)", [convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)]
-    #genCExp(m)
+    genCExp(m)
 
 print "\nCreating Weights"
 weights = np.genfromtxt('mnist/para/softmax_weights.csv', delimiter=',')
@@ -130,20 +137,22 @@ biases = np.genfromtxt('mnist/para/softmax_biases.csv', delimiter=',')
 B = [ RealVal(biases[i]) for i in range(l1_n) ]
 
 print "Creating Assertions"
+scale = RealVal(255)
 if verify_mode == "specific":
   # The MNIST data set has 10,000 images for testing
-  inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
-  InX = [ RealVal(inputs[input_id][i]) for i in range(l0_n) ]
+  inputs = np.genfromtxt('mnist/para/mnist_test_images_unscaled_100.csv', delimiter=',')
+  X = [ IntVal(inputs[input_id][i]) for i in range(l0_n) ]
+  InX = scaleInput(X, scale, l0_n)
 else:
-  InX= [ Real('inX-%s' % i) for i in range(l0_n) ]
-InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
+  X = [ Int('x%s' % i) for i in range(l0_n) ]
+  InX = scaleInput(X, scale, l0_n)
+Y = [ Int('y%s' % i) for i in range(l0_n) ]
+InY = scaleInput(Y, scale, l0_n)
 
 OutX = vmmul(InX, W, B, l0_n, l1_n)
 OutY = vmmul(InY, W, B, l0_n, l1_n)
-#input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
-#output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
-input_cond = [ And( Or(InX[i] - InY[i] > input_bound, InY[i] - InX[i] > input_bound), 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
-output_cond = [ robust(OutX, OutY, l1_n) ]
+input_cond = [ And(X[i] - Y[i] < input_bound, Y[i] - X[i] < input_bound, 0 <= Y[i], Y[i] <= 255, 0 <= X[i], X[i] <= 255) for i in range(l0_n) ]
+output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
 
 s = Solver()
 s.add(input_cond +
