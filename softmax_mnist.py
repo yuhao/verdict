@@ -18,7 +18,7 @@ parser.add_argument("-r", "--robustness",
 parser.add_argument("-o", "--output-bound",
                     dest="output_bound",
                     type=int,
-                    help="output bound. invalid when robustness is strong",
+                    help="output bound. invalid when robustness is precise",
                     default=1)
 parser.add_argument("-m", "--verify-mode",
                     dest="verify_mode",
@@ -112,9 +112,11 @@ def solveIt():
   if (result == sat):
     m = s.model()
     #print m
-    print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)])
-    print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)])
-    genCExp(m)
+    #print "argmax(OutX)", np.argmax([convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)])
+    #print "argmax(OutY)", np.argmax([convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)])
+    print "(OutX)", [convertToPythonNum(m.evaluate(OutX[i])) for i in range(l1_n)]
+    print "(OutY)", [convertToPythonNum(m.evaluate(OutY[i])) for i in range(l1_n)]
+    #genCExp(m)
 
 print "\nCreating Weights"
 weights = np.genfromtxt('mnist/para/softmax_weights.csv', delimiter=',')
@@ -138,8 +140,10 @@ InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
 
 OutX = vmmul(InX, W, B, l0_n, l1_n)
 OutY = vmmul(InY, W, B, l0_n, l1_n)
-input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
-output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
+#input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
+#output_cond = [ Not( robust(OutX, OutY, l1_n) ) ]
+input_cond = [ And( Or(InX[i] - InY[i] > input_bound, InY[i] - InX[i] > input_bound), 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
+output_cond = [ robust(OutX, OutY, l1_n) ]
 
 s = Solver()
 s.add(input_cond +
