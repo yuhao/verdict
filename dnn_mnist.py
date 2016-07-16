@@ -10,7 +10,7 @@ parser.add_argument("-i", "--input-perturbation",
                     dest="input_bound",
                     type=float,
                     help="input perturbation. choose between (0, 1)",
-                    default=0.0001)
+                    default=0.004)
 parser.add_argument("-r", "--robustness",
                     dest="robust_cons",
                     help="robustness constraint. choose between <imprecise, precise>",
