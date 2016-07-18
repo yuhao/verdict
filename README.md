@@ -39,19 +39,3 @@ Note that this is just one (perhaps most intuitive) definition of robustness. Th
   * `-a`: activation function, choose between "none, relu, reluC, sigmoid, approx_sigmoid". By default it's set to "none". "relu" is the most widely used activation function, but the number of constraints grows exponentially because the ReLU function introducs a logic *OR*. The verifier is not complete if one uses "sigmoid" because Z3 does not have a complete solver for non-polynomial real arithmetic. If you really want to use the sigmoid activation function, you could try "approx_sigmoid", which uses the first 4 terms of sigmoid's taylor series to approaximate sigmoid (which is what a software library and most hardware implementations will do anyways). "approx_sigmoid" transforms a set of exponential constraints to a set of polynomial constraints, for which Z3 has a complete solver in the real domain.
 2. `python softmax_mnist.py` launches the Softmax verifier. The usage is similar to `dnn_mnist.py` except there is no `-a` option because a softmax model does not have an activation function.
   * Just to provide an intuition of the runtime difference between different robustness constraints, on a Xeon E5-2640 CPU running at 2.50GHz, the "imprecise" constraint took about 24 mins, and the "strong" constraint took about 40 mins. MNIST only has 10 labels--the runtime difference grows exponentially as the number of output labels increases (Take a look at their logic formulars to understand why).
-
-##Readings
-
-###Position Papers and Articles
-1. [Concrete Problems in AI Safety](https://arxiv.org/pdf/1606.06565v1.pdf)
-2. [Machine Learning: The High-Interest Credit Card of Technical Debt](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43146.pdf)
-3. [Cyber-physical systems you can bet your life on](https://www.microsoft.com/en-us/research/cyber-physical-systems-can-bet-life/)
-
-###Technical Papers
-There are a wide range of papers discussing the safty and robustness of machine learning in specific applications domains as well as techniques to address them. The following is undoutedly an incomplete list, and is getting constantly updated. Let me know if you know of a relavant paper!
-
-1. [Intriguing Properties of Neural Networks](https://cs.nyu.edu/~zaremba/docs/understanding.pdf)
-2. [Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images](http://arxiv.org/pdf/1412.1897v4.pdf)
-3. [Improving the Robustness of Deep Neural Networks via Stability Training](http://arxiv.org/pdf/1604.04326v1.pdf)
-4. [Towards Deep Neural Network Architectures Robust to Adversarial Examples](http://arxiv.org/pdf/1412.5068v4.pdf)
-5. [Measuring Neural Net Robustness with Constraints](http://arxiv.org/pdf/1605.07262v1.pdf)
