@@ -78,11 +78,12 @@ def robust(X, Y, n):
     # This is the precise constraint for robustness, but more complex to solve.
     # It is equivalent to assert argmax(X) == argmax(Y). Note that if there are
     # multiple occurrences of the max value, the standard argmax will return
-    # only the first occurrence.  In that case, this |robust| implementation
+    # only the first occurrence. In that case, this |robust| implementation
     # for checking robustness is incorrect. For example, if X = [4, 4, 4] and Y
     # = [3, 5, 3], then argmax(X) is 0 and argmax(Y) is 1.  In this case,
     # argmax(X) != argmax(Y) while robust(X, Y, 3) is still true because
     # And(X[1] >= X[0], X[1] >= X[2], Y[1] >= Y[0], Y[1] >= Y[2]) == True.
+    # See argmax.py for more details.
     return Or( [ And( [ And( X[j] >= X[i], Y[j] >= Y[i] ) for i in range(n) if i != j ] ) for j in range(n) ] )
 
 # To Make sure all elements in X are different
