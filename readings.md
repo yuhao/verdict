@@ -6,8 +6,6 @@
 3. [Cyber-physical systems you can bet your life on](https://www.microsoft.com/en-us/research/cyber-physical-systems-can-bet-life/)
 
 ##Technical Papers
-There are a wide range of papers discussing the safty and robustness of machine learning in specific applications domains as well as techniques to address them. The following is undoutedly an incomplete list, and is getting constantly updated. Let me know if you know of a relavant paper!
-
 1. [Intriguing Properties of Neural Networks](https://cs.nyu.edu/~zaremba/docs/understanding.pdf)
 2. [Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images](http://arxiv.org/pdf/1412.1897v4.pdf)
 3. [Improving the Robustness of Deep Neural Networks via Stability Training](http://arxiv.org/pdf/1604.04326v1.pdf)
