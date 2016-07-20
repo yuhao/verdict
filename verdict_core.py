@@ -63,6 +63,7 @@ def unique(X, n):
   return And([X[i] != X[j] for i in range(n) for j in range(i) if j != i])
 
 def sigmoid(x):
+  natureExp = RealVal(math.e)
   res = 1 / (1 + natureExp**(-x))
   return res
 
@@ -87,6 +88,7 @@ def vmmul(V, M, B, m, n, act_func):
     if act_func == "relu":
       res[i] = If(tmp > 0, tmp, 0)
     elif act_func == "reluC":
+      reluC = RealVal(0.01)
       res[i] = If(tmp > 0, tmp, tmp * reluC)
     elif act_func == "sigmoid":
       res[i] = sigmoid(tmp)
