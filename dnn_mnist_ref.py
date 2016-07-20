@@ -141,5 +141,5 @@ else:
   outy = [m.evaluate(OutY[i]) for i in range(l3_n)]
   print "OutX", outx
   print "OutY", outy
-  print "argmax(OutX)", np.argmax(outx)
-  print "argmax(OutY)", np.argmax(outy)
+  print "argmax(OutX)", core.argmax(outx)
+  print "argmax(OutY)", core.argmax(outy)

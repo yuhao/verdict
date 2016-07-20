@@ -46,11 +46,11 @@ for arg in vars(args):
 set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
-def genCExp(m):
+def genCExp(X, Y, n):
   with file('cexp.csv', 'w') as outfile:
-    inx = [convertToPythonNum(m.evaluate(X[i])) for i in range(l0_n)]
+    inx = [core.convertToPythonNum(X[i]) for i in range(n)]
     np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
-    iny = [convertToPythonNum(m.evaluate(Y[i])) for i in range(l0_n)]
+    iny = [core.convertToPythonNum(Y[i]) for i in range(n)]
     np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
 
 print "\nCreating Weights"
@@ -90,7 +90,7 @@ if input_scaled == "scaled":
   input_cond = [ And(InX[i] - InY[i] < input_var, InY[i] - InX[i] < input_var, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
 else:
   input_cond = [ And(X[i] - Y[i] < input_var, Y[i] - X[i] < input_var, 0 <= Y[i], Y[i] <= 255, 0 <= X[i], X[i] <= 255) for i in range(l0_n) ]
-output_cond = [ Not( core.full_robust(OutX, OutY, l1_n, robust_cons) ) ]
+output_cond = [ Not( core.full_robust(OutX, OutY, l1_n, robust_cons, bound=output_bound) ) ]
 
 s = Solver()
 s.add(input_cond +
@@ -98,11 +98,10 @@ s.add(input_cond +
 result = core.solveIt(s)
 if (result == sat):
   m = s.model()
-  #print m
   outx = [m.evaluate(OutX[i]) for i in range(l1_n)]
   outy = [m.evaluate(OutY[i]) for i in range(l1_n)]
   print "OutX", outx
   print "OutY", outy
-  print "argmax(OutX)", np.argmax(outx)
-  print "argmax(OutY)", np.argmax(outy)
-  genCExp(m)
+  print "argmax(OutX)", core.argmax(outx)
+  print "argmax(OutY)", core.argmax(outy)
+  genCExp(outx, outy, l1_n)

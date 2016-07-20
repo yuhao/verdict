@@ -17,10 +17,11 @@ def convertToPythonNum(num):
   else:
     return float(num.as_string())
 
-def argmax(X, n):
+def argmax(X):
   maxId = 0
   maxVal = X[0]
-  for i in range(1, n):
+  num = len(X)
+  for i in range(1, num):
     if simplify(X[i] >= maxVal):
       maxVal = X[i]
       maxId = i
@@ -39,13 +40,13 @@ def ref_robust(X, Y, n):
   return [ Y[maxId] >= Y[i] for i in range(n) if i != maxId ]
 
 # Full robustness without a reference
-def full_robust(X, Y, n, mode):
+def full_robust(X, Y, n, mode, bound=1):
   if mode == "imprecise":
     # This is an imprecise constraint. It asserts that a model is robust if
     # *all* labels' errors are bound by |output_bound|. Depending on the value
     # of |output_bound|, this constraint could be more relaxed or stricter than
     # the precise constraint. Relaxed or strict, it is easier to solve.
-    return And( [ And(Y[i] - X[i] < output_bound, X[i] - Y[i] < output_bound) for i in range(n) ] )
+    return And( [ And(Y[i] - X[i] < bound, X[i] - Y[i] < bound) for i in range(n) ] )
   else:
     # This is the precise constraint for robustness, but more complex to solve.
     # It is equivalent to assert argmax(X) == argmax(Y). Note that if there are

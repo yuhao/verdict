@@ -88,7 +88,7 @@ OutY = core.vmmul(L2Y, W3, B3, l2_n, l3_n, act_func)
 #TODO: The input pertubation constriants have to be more general
 input_cond = [ And(InX[i] - InY[i] < input_bound, InY[i] - InX[i] < input_bound, 0 <= InY[i], InY[i] <= 1, 0 <= InX[i], InX[i] <= 1) for i in range(l0_n) ]
 
-output_cond = [ Not( core.full_robust(OutX, OutY, l3_n, robust_cons) ) ]
+output_cond = [ Not( core.full_robust(OutX, OutY, l3_n, robust_cons, bound=output_bound) ) ]
 
 s = Solver()
 s.add(input_cond +
@@ -97,9 +97,9 @@ result = core.solveIt(s)
 if (result == sat):
   m = s.model()
   #print m
-  outx = [m.evaluate(OutX[i]) for i in range(l1_n)]
-  outy = [m.evaluate(OutY[i]) for i in range(l1_n)]
+  outx = [m.evaluate(OutX[i]) for i in range(l3_n)]
+  outy = [m.evaluate(OutY[i]) for i in range(l3_n)]
   print "OutX", outx
   print "OutY", outy
-  print "argmax(OutX)", np.argmax(outx)
-  print "argmax(OutY)", np.argmax(outy)
+  print "argmax(OutX)", core.argmax(outx)
+  print "argmax(OutY)", core.argmax(outy)
