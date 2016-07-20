@@ -67,7 +67,7 @@ B = [ RealVal(biases[i]) for i in range(l1_n) ]
 print "Creating Assertions"
 if (input_scaled == "scaled"):
   if verify_mode == "specific":
-    inputs = np.genfromtxt('mnist/para/mnist_test_images_scaled_100.csv', delimiter=',')
+    inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
     InX = [ RealVal(inputs[0][i]) for i in range(l0_n) ]
   else:
     InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
@@ -99,7 +99,7 @@ result = core.solveIt(s)
 if (result == sat):
   m = s.model()
   #print m
-  outx = [simplify(OutX[i]) for i in range(l1_n)]
+  outx = [m.evaluate(OutX[i]) for i in range(l1_n)]
   outy = [m.evaluate(OutY[i]) for i in range(l1_n)]
   print "OutX", outx
   print "OutY", outy
