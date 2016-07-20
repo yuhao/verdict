@@ -1,7 +1,7 @@
 # Verdict: Safe and Robust Machine Learning
 
 ##Mission Statement
-Machine learning has brought lots of excitement and potential for AI technologies to be beneficial for humanity. However, a series of challenges have to be addressed before AI/ML systems can be practically deployed and integrated in our eveyday life. Cutting-edge research challenges include performance, accuracy, scalability, energy-efficiency, privacy, security, etc. While we strongly support research in these areas, this project specifically focus on the *safty* and *robustness* aspect of machine learning. That is, how do we make sure a machine learning-based system is robust against uncertainty and failure, and will not perform unintended and harmful behaviors? Think about the autopilot system in a [self driving car](http://www.nytimes.com/2016/07/13/business/tesla-autopilot-fatal-crash-investigation.html?_r=0) or the controller of a satellite.
+Machine learning has brought lots of excitement and potential for AI technologies to be beneficial for humanity. However, a series of challenges have to be addressed before AI/ML systems can be practically deployed and integrated into our eveyday life. Cutting-edge research challenges include performance, accuracy, scalability, energy-efficiency, privacy, security, etc. While we strongly support research in these areas, this project specifically focuses on the *safty* and *robustness* aspect of machine learning. That is, how do we make sure a machine learning-based system is robust against uncertainty and failure, and will not perform unintended and harmful behaviors? Think about the autopilot system in a [self driving car](http://www.nytimes.com/2016/07/13/business/tesla-autopilot-fatal-crash-investigation.html?_r=0), or the controller of a satellite, or more controversially [predicting how likely someone is going to commit a crime](http://www.bloomberg.com/features/2016-richard-berk-future-crime/).
 
 Our mission is to build systems that enable safe and robust machine learning, thereby pushing machine learning systems one step closer toward reality. By systems, we mean both software systems (e.g., programming language, runtime/middleware, formal verifier) and hardware systems (e.g., customized accelerators, FPGAs).
 
@@ -41,17 +41,5 @@ Note that this is just one (perhaps most intuitive) definition of robustness. Th
   * Just to provide an intuition of the runtime difference between different robustness constraints, on a Xeon E5-2640 CPU running at 2.50GHz, the "imprecise" constraint took about 24 mins, and the "strong" constraint took about 40 mins. MNIST only has 10 labels--the runtime difference grows exponentially as the number of output labels increases (Take a look at their logic formulars to understand why).
 
 ##Readings
+See the reading list [page](https://github.com/yuhao/verdict/blob/master/readings.md). There are a wide range of papers discussing the safty and robustness of machine learning in specific applications domains as well as techniques to address them. The list is undoutedly incomplete, and is getting constantly updated. Let me know if you know of a relavant paper!
 
-###Position Papers and Articles
-1. [Concrete Problems in AI Safety](https://arxiv.org/pdf/1606.06565v1.pdf)
-2. [Machine Learning: The High-Interest Credit Card of Technical Debt](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43146.pdf)
-3. [Cyber-physical systems you can bet your life on](https://www.microsoft.com/en-us/research/cyber-physical-systems-can-bet-life/)
-
-###Technical Papers
-There are a wide range of papers discussing the safty and robustness of machine learning in specific applications domains as well as techniques to address them. The following is undoutedly an incomplete list, and is getting constantly updated. Let me know if you know of a relavant paper!
-
-1. [Intriguing Properties of Neural Networks](https://cs.nyu.edu/~zaremba/docs/understanding.pdf)
-2. [Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images](http://arxiv.org/pdf/1412.1897v4.pdf)
-3. [Improving the Robustness of Deep Neural Networks via Stability Training](http://arxiv.org/pdf/1604.04326v1.pdf)
-4. [Towards Deep Neural Network Architectures Robust to Adversarial Examples](http://arxiv.org/pdf/1412.5068v4.pdf)
-5. [Measuring Neural Net Robustness with Constraints](http://arxiv.org/pdf/1605.07262v1.pdf)
