@@ -46,13 +46,6 @@ for arg in vars(args):
 set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
-def genCExp(filename, X, Y, n):
-  with file(filename, 'w') as outfile:
-    inx = [core.convertToPythonNum(X[i]) for i in range(n)]
-    np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
-    iny = [core.convertToPythonNum(Y[i]) for i in range(n)]
-    np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
-
 print "\nCreating Weights"
 weights = np.genfromtxt('mnist/para/softmax_weights.csv', delimiter=',')
 l0_n, l1_n = weights.shape #748, 10
@@ -104,4 +97,4 @@ if (result == sat):
   print "OutY", outy
   print "argmax(OutX)", core.argmax(outx)
   print "argmax(OutY)", core.argmax(outy)
-  genCExp(outx, outy, l1_n)
+  core.genCExp('/tmp/temp.csv', outx, outy)

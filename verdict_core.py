@@ -1,4 +1,5 @@
 from z3 import *
+import numpy as np
 import time
 
 def convertToPythonNum(num):
@@ -106,4 +107,12 @@ def solveIt(s):
   print "[Solver Runtime] %.2f %s" % (duration, result)
 
   return result
+
+def genCExp(filename, X, Y):
+  n = len(X)
+  with file(filename, 'w') as outfile:
+    inx = [convertToPythonNum(X[i]) for i in range(n)]
+    np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
+    iny = [convertToPythonNum(Y[i]) for i in range(n)]
+    np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
 
