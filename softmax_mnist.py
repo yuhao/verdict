@@ -46,11 +46,11 @@ for arg in vars(args):
 set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
-def genCExp(m):
-  with file('cexp.csv', 'w') as outfile:
-    inx = [convertToPythonNum(m.evaluate(X[i])) for i in range(l0_n)]
+def genCExp(filename, X, Y, n):
+  with file(filename, 'w') as outfile:
+    inx = [core.convertToPythonNum(X[i]) for i in range(n)]
     np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
-    iny = [convertToPythonNum(m.evaluate(Y[i])) for i in range(l0_n)]
+    iny = [core.convertToPythonNum(Y[i]) for i in range(n)]
     np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
 
 print "\nCreating Weights"
@@ -103,6 +103,6 @@ if (result == sat):
   outy = [m.evaluate(OutY[i]) for i in range(l1_n)]
   print "OutX", outx
   print "OutY", outy
-  print "argmax(OutX)", np.argmax(outx)
-  print "argmax(OutY)", np.argmax(outy)
-  genCExp(m)
+  print "argmax(OutX)", core.argmax(outx)
+  print "argmax(OutY)", core.argmax(outy)
+  genCExp('cexp.csv', outx, outy, l0_n)
