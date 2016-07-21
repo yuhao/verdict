@@ -97,4 +97,4 @@ if (result == sat):
   print "OutY", outy
   print "argmax(OutX)", core.argmax(outx)
   print "argmax(OutY)", core.argmax(outy)
-  core.genCExp('/tmp/temp.csv', outx, outy)
+  core.genCounterExp('/tmp/temp.csv', m, InX, InY)

@@ -143,3 +143,4 @@ else:
   print "OutY", outy
   print "argmax(OutX)", core.argmax(outx)
   print "argmax(OutY)", core.argmax(outy)
+  core.genCounterExp('/tmp/dnn_mnist_ref.csv', m, InX, InY)

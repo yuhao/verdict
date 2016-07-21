@@ -37,7 +37,7 @@ def scaleInput(X, scale, n):
 
 # Robustness based on the reference X
 def ref_robust(X, Y, n):
-  maxId = argmax(X, n)
+  maxId = argmax(X)
   return [ Y[maxId] >= Y[i] for i in range(n) if i != maxId ]
 
 # Full robustness without a reference
@@ -108,11 +108,11 @@ def solveIt(s):
 
   return result
 
-def genCExp(filename, X, Y):
+def genCounterExp(filename, m, X, Y):
   n = len(X)
   with file(filename, 'w') as outfile:
-    inx = [convertToPythonNum(X[i]) for i in range(n)]
+    inx = [convertToPythonNum(m.evaluate(X[i])) for i in range(n)]
     np.savetxt(outfile, np.atleast_2d(inx), delimiter=",")
-    iny = [convertToPythonNum(Y[i]) for i in range(n)]
+    iny = [convertToPythonNum(m.evaluate(Y[i])) for i in range(n)]
     np.savetxt(outfile, np.atleast_2d(iny), delimiter=",")
 
