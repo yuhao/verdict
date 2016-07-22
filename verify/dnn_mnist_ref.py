@@ -53,9 +53,9 @@ def vmmul(V1, V2, M, B, m, n, act):
   return (res1, res2, cond)
 
 print "\nCreating Weights"
-weights1 = np.genfromtxt('mnist/para/weights1.csv', delimiter=',')
-weights2 = np.genfromtxt('mnist/para/weights2.csv', delimiter=',')
-weights3 = np.genfromtxt('mnist/para/weights3.csv', delimiter=',')
+weights1 = np.genfromtxt('../mnist/para/weights1.csv', delimiter=',')
+weights2 = np.genfromtxt('../mnist/para/weights2.csv', delimiter=',')
+weights3 = np.genfromtxt('../mnist/para/weights3.csv', delimiter=',')
 
 l0_n, l1_n = weights1.shape #748, 128
 l2_n, l3_n = weights3.shape #32, 10
@@ -69,16 +69,16 @@ W2 = [ [ RealVal(weights2[i][j]) for j in range(l1_n) ] for i in range(l2_n) ]
 W3 = [ [ RealVal(weights3[i][j]) for j in range(l2_n) ] for i in range(l3_n) ]
 
 print "Creating Biases"
-biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
-biases2 = np.genfromtxt('mnist/para/biases2.csv', delimiter=',')
-biases3 = np.genfromtxt('mnist/para/biases3.csv', delimiter=',')
+biases1 = np.genfromtxt('../mnist/para/biases1.csv', delimiter=',')
+biases2 = np.genfromtxt('../mnist/para/biases2.csv', delimiter=',')
+biases3 = np.genfromtxt('../mnist/para/biases3.csv', delimiter=',')
 
 B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
 B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
 B3 = [ RealVal(biases3[i]) for i in range(l3_n) ]
 
 print "Creating Assertions"
-inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
+inputs = np.genfromtxt('../mnist/para/mnist_test_images_100.csv', delimiter=',')
 InX = [ RealVal(inputs[input_id][i]) for i in range(l0_n) ]
 InY= [ Real('inY-%s' % i) for i in range(l0_n) ]
 

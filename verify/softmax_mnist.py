@@ -47,20 +47,20 @@ set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
 print "\nCreating Weights"
-weights = np.genfromtxt('mnist/para/softmax_weights.csv', delimiter=',')
+weights = np.genfromtxt('../mnist/para/softmax_weights.csv', delimiter=',')
 l0_n, l1_n = weights.shape #748, 10
 weights = np.transpose(weights)
 # W = 10_row * 784_col
 W = [ [ RealVal(weights[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
 
 print "Creating Biases"
-biases = np.genfromtxt('mnist/para/softmax_biases.csv', delimiter=',')
+biases = np.genfromtxt('../mnist/para/softmax_biases.csv', delimiter=',')
 B = [ RealVal(biases[i]) for i in range(l1_n) ]
 
 print "Creating Assertions"
 if (input_scaled == "scaled"):
   if verify_mode == "specific":
-    inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
+    inputs = np.genfromtxt('../mnist/para/mnist_test_images_100.csv', delimiter=',')
     InX = [ RealVal(inputs[0][i]) for i in range(l0_n) ]
   else:
     InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
@@ -68,7 +68,7 @@ if (input_scaled == "scaled"):
 else: #unscaled
   scale = RealVal(255)
   if verify_mode == "specific":
-    inputs = np.genfromtxt('mnist/para/mnist_test_images_unscaled_100.csv', delimiter=',')
+    inputs = np.genfromtxt('../mnist/para/mnist_test_images_unscaled_100.csv', delimiter=',')
     X = [ IntVal(inputs[input_id][i]) for i in range(l0_n) ]
     InX = core.scaleInput(X, scale, l0_n)
   else:

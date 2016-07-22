@@ -32,14 +32,14 @@ set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
 print "\nCreating Weights"
-weights = np.genfromtxt('mnist/para/softmax_weights.csv', delimiter=',')
+weights = np.genfromtxt('../mnist/para/softmax_weights.csv', delimiter=',')
 l0_n, l1_n = weights.shape #748, 10
 weights = np.transpose(weights)
 # W = 10_row * 784_col
 W = [ [ RealVal(weights[i][j]) for j in range(l0_n) ] for i in range(l1_n) ]
 
 print "Creating Biases"
-biases = np.genfromtxt('mnist/para/softmax_biases.csv', delimiter=',')
+biases = np.genfromtxt('../mnist/para/softmax_biases.csv', delimiter=',')
 B = [ RealVal(biases[i]) for i in range(l1_n) ]
 
 print "Creating Assertions"

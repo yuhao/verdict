@@ -44,9 +44,9 @@ set_option(rational_to_decimal=True)
 set_option("verbose", 10)
 
 print "\nCreating Weights"
-weights1 = np.genfromtxt('mnist/para/weights1.csv', delimiter=',')
-weights2 = np.genfromtxt('mnist/para/weights2.csv', delimiter=',')
-weights3 = np.genfromtxt('mnist/para/weights3.csv', delimiter=',')
+weights1 = np.genfromtxt('../mnist/para/weights1.csv', delimiter=',')
+weights2 = np.genfromtxt('../mnist/para/weights2.csv', delimiter=',')
+weights3 = np.genfromtxt('../mnist/para/weights3.csv', delimiter=',')
 
 l0_n, l1_n = weights1.shape #748, 128
 l2_n, l3_n = weights3.shape #32, 10
@@ -60,9 +60,9 @@ W2 = [ [ RealVal(weights2[i][j]) for j in range(l1_n) ] for i in range(l2_n) ]
 W3 = [ [ RealVal(weights3[i][j]) for j in range(l2_n) ] for i in range(l3_n) ]
 
 print "Creating Biases"
-biases1 = np.genfromtxt('mnist/para/biases1.csv', delimiter=',')
-biases2 = np.genfromtxt('mnist/para/biases2.csv', delimiter=',')
-biases3 = np.genfromtxt('mnist/para/biases3.csv', delimiter=',')
+biases1 = np.genfromtxt('../mnist/para/biases1.csv', delimiter=',')
+biases2 = np.genfromtxt('../mnist/para/biases2.csv', delimiter=',')
+biases3 = np.genfromtxt('../mnist/para/biases3.csv', delimiter=',')
 
 B1 = [ RealVal(biases1[i]) for i in range(l1_n) ]
 B2 = [ RealVal(biases2[i]) for i in range(l2_n) ]
@@ -71,7 +71,7 @@ B3 = [ RealVal(biases3[i]) for i in range(l3_n) ]
 print "Creating Assertions"
 if verify_mode == "specific":
   # The MNIST data set has 10,000 images for testing
-  inputs = np.genfromtxt('mnist/para/mnist_test_images_100.csv', delimiter=',')
+  inputs = np.genfromtxt('../mnist/para/mnist_test_images_100.csv', delimiter=',')
   InX = [ RealVal(inputs[0][i]) for i in range(l0_n) ]
 else:
   InX = [ Real('inX-%s' % i) for i in range(l0_n) ]
