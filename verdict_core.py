@@ -100,6 +100,31 @@ def vmmul(V, M, B, m, n, act_func):
       res[i] = tmp
   return res
 
+def gaussian_kernel(size, sigma=1):
+  x, y = np.mgrid[-size:size+1, -size:size+1]
+  g = np.exp(-(x**2 / float(size) + y**2 / float(size))/(2 * sigma**2))
+  return g / g.sum()
+
+def convolve(X, K, isize):
+  ksize = K.shape[0]
+  kprime = ksize / 2
+
+  conv_X = [0] * (isize * isize)
+
+  for i in range(isize):
+    for j in range(isize):
+      for m in range(ksize):
+        for n in range(ksize):
+          iprime = i - kprime + m
+          jprime = j - kprime + n
+          if (iprime < 0 or iprime >= isize or jprime < 0 or jprime >= isize):
+            value = 0
+          else:
+            value = X[iprime * isize + jprime]
+          conv_X[i * isize + j] += value * K[m][n]
+
+  return conv_X
+
 def solveIt(s):
   startTime = time.time()
   result = s.check()
