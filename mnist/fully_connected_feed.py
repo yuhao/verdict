@@ -235,9 +235,9 @@ def run_training():
                                    images_placeholder,
                                    labels_placeholder)
       #  output with softmax
-        print(sess.run(tf.nn.softmax(logits), feed_dict=feed_dict))
+      #  print(sess.run(tf.nn.softmax(logits), feed_dict=feed_dict))
       #  output without softmax
-      #  print(sess.run(logits, feed_dict=feed_dict))
+        print(sess.run(logits, feed_dict=feed_dict))
       #  weights1 = sess.run("hidden1/weights:0")
       #  weights2 = sess.run("hidden2/weights:0")
       #  weights3 = sess.run("softmax_linear/weights:0")
