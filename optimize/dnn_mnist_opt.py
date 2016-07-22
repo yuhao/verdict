@@ -150,7 +150,7 @@ def main():
   input_id = args.input_id
 
   max_robustness = FindMaximalRobustness(pywraplp.Solver.GLOP_LINEAR_PROGRAMMING, input_id)
-  print("\nMaximul Tolerable Perturbation is %f (%d)" % (max_robustness, max_robustness * 255))
+  print("\nMaximal Tolerable Perturbation for Image %d is %f (%d)" % (input_id, max_robustness, max_robustness * 255))
 
 
 if __name__ == '__main__':
