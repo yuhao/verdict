@@ -7,7 +7,9 @@ Our mission is to build systems that enable safe and robust machine learning, th
 
 ##State of the Project
 
-As of now, this project has a formal verifier for verifying the *robustness* of a machine learning model. This is a living document of the project. It might be messy and is constantly being updated. More goals will be defined and more systems will be developed as we get a deeper understanding of the problem space.
+As of now, this project focuses on the *robustness* aspect of machine learning models. We have created formal verfication tools that can verify the robustness of a given machine learning model against certain level of perturbation, as well as optimization tools that find the maximal perturbation a particular model can tolerate while still being robust. These tools will provide the necessary theoretical foundation for building a robust machine learning system in practice.
+
+This is a living document of the project. It might be messy and is constantly being updated. More goals will be defined and more systems will be developed as we get a deeper understanding of the problem space.
 
 ###What is a Robust Model
 
@@ -21,15 +23,15 @@ where `\delta` and `\theta` are parameters to control the perturbation and robus
 Note that this is just one (perhaps most intuitive) definition of robustness. There could be others. For example, one could argue that a robust model should also guarantee `\forany x, |f(x) - f(x')| < \theta --> |x - x'| < \delta`. That is, if two predictions are close enough, their corresponding inputs should not be too different. However, one could further argue that if a model can correctly label two seemingly completely different inputs as the same thing, then that model is robust because it is not easily fooled! See [this](http://arxiv.org/pdf/1412.1897v4.pdf) paper for a concrete example. The exact definition of robustness can vary, and the verifier should be general enough to handle different cases.
 
 ###Dependencies
-1. [Z3 theorem prover](https://github.com/Z3Prover/z3). Follow its installation instructions. You will need it to run the formal verifier. Remember to build its python binding.
-2. [Tensorflow](https://github.com/tensorflow/tensorflow). For training a machine learning model (running applications under `mnist/` for example). Technically this is not a required dependency if you know how to train a machine learning model by yourself or in other languages. The formal verifier only cares about the details of a pre-traind model (e.g., the topology and weights in the case of a neural network) and does not care how it is trained.
-3. Python 2.7. We have not tested it on Python 3.x.
+1. [Z3 theorem prover](https://github.com/Z3Prover/z3). Follow its installation instructions. You will need it to run formal verification tools. Remember to build its Python binding.
+2. [or-tools](https://github.com/google/or-tools/). For running optimization tools, which are based on linearing programming and constraints solving. Remember to build its Python binding.
+3. [Tensorflow](https://github.com/tensorflow/tensorflow). For training machine learning models (running applications under `mnist/` for example). Technically this is not a required dependency if you know how to train a machine learning model by yourself or in other languages.
+4. Python 2.7. We have not tested it on Python 3.x.
 
 ###Directory Structure
-* `mnist/` contains various tensorflow-based applications for constructing machine learning models for MNIST. The `para/` subdirectory contains model parameters for various models. They will be read by a verifier.
-* `simple.py` is a verifier for an artifial 1-layer 5*5 neural net. It's mainly for demonstration purposes.
-* `dnn_mnist.py` is a verifier for a 3-layer DNN (784 * 128 * 32 * 10) for MNIST trained by `mnist/fully_connected_feed.py`
-* `softmax_mnist.py` is a verifier for a linear softmax model for MNIST trained by `mnist/mnist_softmax.py`
+* `mnist/` contains various tensorflow-based applications for constructing machine learning models for MNIST. The `para/` subdirectory contains ML model parameters, which are inputs to verifiers and optimizers.
+* `verify/` contains various formal verification tools that verify different aspects of robustness on different types of models. Read it's README for details.
+* `optimize/` contains optimizers that find the maximal input perturbation that ML models can tolerate. Read it's README for details.
 
 ##Readings
 See the reading list [page](https://github.com/yuhao/verdict/blob/master/readings.md). There are a wide range of papers discussing the safty and robustness of machine learning in specific applications domains as well as techniques to address them. The list is undoutedly incomplete, and is getting constantly updated. Let me know if you know of a relavant paper!
