@@ -4,6 +4,8 @@ from ortools.linear_solver import pywraplp
 import numpy as np
 import argparse
 
+LP_Solution_Status = ["OPTIMAL", "FEASIBLE", "INFEASIBLE", "UNBOUNDED", "ABNORMAL", "NOT_SOLVED"]
+
 def vvmul(V1, V2, bias, n):
   res = 0.0
   for i in range(0, n):
@@ -115,6 +117,8 @@ def FindMaximalRobustness(optimization_problem_type, input_id):
         min_delta = solver.Objective().Value()
         #OutY_Value = [ OutY[i].solution_value() for i in range(l3_n)]
       #print("Min Delta:", min_delta)
+    else:
+      print(LP_Solution_Status[result])
 
   #print('OutX =', OutX)
   #print('OutY =', OutY_Value)
