@@ -42,12 +42,14 @@ def vmmul_consume_sign(V, S, M, B, m, n, act):
       res[i] = tmp
   return (res, cond)
 
-def FindMaximalRobustness(optimization_problem_type, input_id):
-  """Example of simple linear program with natural language API."""
+def FindMaximalRobustness(optimization_problem_type, args):
+  input_id = args.input_id
+  data_dir = args.data_dir
+
   print("\nProcess Weights")
-  weights1 = np.genfromtxt('../mnist/para/weights1.csv', delimiter=',')
-  weights2 = np.genfromtxt('../mnist/para/weights2.csv', delimiter=',')
-  weights3 = np.genfromtxt('../mnist/para/weights3.csv', delimiter=',')
+  weights1 = np.genfromtxt(data_dir+'/weights1.csv', delimiter=',')
+  weights2 = np.genfromtxt(data_dir+'/weights2.csv', delimiter=',')
+  weights3 = np.genfromtxt(data_dir+'/weights3.csv', delimiter=',')
 
   l0_n, l1_n = weights1.shape #748, 128
   l2_n, l3_n = weights3.shape #32, 10
@@ -57,9 +59,9 @@ def FindMaximalRobustness(optimization_problem_type, input_id):
   W3 = np.transpose(weights3)
 
   print("Process Biases")
-  B1 = np.genfromtxt('../mnist/para/biases1.csv', delimiter=',')
-  B2 = np.genfromtxt('../mnist/para/biases2.csv', delimiter=',')
-  B3 = np.genfromtxt('../mnist/para/biases3.csv', delimiter=',')
+  B1 = np.genfromtxt(data_dir+'/biases1.csv', delimiter=',')
+  B2 = np.genfromtxt(data_dir+'/biases2.csv', delimiter=',')
+  B3 = np.genfromtxt(data_dir+'/biases3.csv', delimiter=',')
 
   print("Process Reference Input")
   inputs = np.genfromtxt('../mnist/para/mnist_test_images_100.csv', delimiter=',')
@@ -150,11 +152,14 @@ def main():
                       type=int,
                       help="input id",
                       default=0)
+  parser.add_argument("-d", "--data-dir",
+                      dest="data_dir",
+                      help="directory for model parameters",
+                      default="../mnist/para")
   args = parser.parse_args()
-  input_id = args.input_id
 
-  max_robustness = FindMaximalRobustness(pywraplp.Solver.GLOP_LINEAR_PROGRAMMING, input_id)
-  print("\nMaximal Tolerable Perturbation for Image %d is %f (%d)" % (input_id, max_robustness, max_robustness * 255))
+  max_robustness = FindMaximalRobustness(pywraplp.Solver.GLOP_LINEAR_PROGRAMMING, args)
+  print("\nMaximal Tolerable Perturbation for Image %d is %f (%d)" % (args.input_id, max_robustness, max_robustness * 255))
 
 
 if __name__ == '__main__':
