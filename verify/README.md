@@ -1,5 +1,13 @@
 # Formal Verification of Robustness
 
+##Files
+1. `dnn_mnist.py`: verifies whether a given DNN-based model is robust against a given perturbation `\epsilon`.
+2. `dnn_mnist_ref.py`: verifies whether a given DNN-based model is robust against a given perturbation `\epsilon` _for a particular input_. This verifier incrementally feeds constraints to the solver to optimize common case performance.
+3. `softmax_mnist.py`: verifies whether a given softmax-based model is robust against a given perturbation `\epsilon`.
+4. `softmax_mnist_conv.py`: verifies whether a given softmax-based model is robust against Gaussian blur.
+5. `verdict_core.py`: provides base functions to all verifiers.
+6. `argmax.py`: compares two different ways of expressing `argmax`.
+
 ##Usage
 1. `python dnn_mnist.py` launches the DNN verifier. Use `-h` to get commandline options.
   * `-i`: input perturbation, choose between (0, 1). By default, it is set to `0.001`, asserting that the acceptable perturbation in the (scaled) pixel intensity is below `0.001`.
