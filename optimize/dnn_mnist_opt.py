@@ -51,7 +51,7 @@ def FindMaximalRobustness(optimization_problem_type, args):
   weights2 = np.genfromtxt(data_dir+'/weights2.csv', delimiter=',')
   weights3 = np.genfromtxt(data_dir+'/weights3.csv', delimiter=',')
 
-  l0_n, l1_n = weights1.shape #748, 128
+  l0_n, l1_n = weights1.shape #784, 128
   l2_n, l3_n = weights3.shape #32, 10
 
   W1 = np.transpose(weights1)
