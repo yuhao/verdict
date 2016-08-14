@@ -53,7 +53,6 @@ def FindMaximalPruning(optimization_problem_type, args):
 
   l0_n, l1_n = weights1.shape #784, 128
   l2_n, l3_n = weights3.shape #32, 10
-  num_weights = l0_n * l1_n + l1_n * l2_n + l2_n * l3_n
 
   W1 = np.transpose(weights1)
   W2 = np.transpose(weights2)
@@ -66,11 +65,33 @@ def FindMaximalPruning(optimization_problem_type, args):
 
   print("Process Reference Input")
   inputs = np.genfromtxt('../mnist/para/mnist_test_images_100.csv', delimiter=',')
-  InX = inputs[input_id]
-  L1X, hl1_sign = vmmul_produce_sign(InX, W1, B1, l0_n, l1_n, True)
-  L2X, hl2_sign = vmmul_produce_sign(L1X, W2, B2, l1_n, l2_n, True)
-  OutX, _ = vmmul_produce_sign(L2X, W3, B3, l2_n, l3_n, False)
-  maxId = np.argmax(OutX)
+  Input = [inputs[input_id], inputs[input_id + 1], inputs[input_id + 2]]
+
+  g_L1X = []
+  g_L1Y = []
+  g_L2X = []
+  g_L2Y = []
+  g_OutX = []
+  g_OutY = []
+  g_maxId = []
+  g_hl1_sign = []
+  g_hl2_sign = []
+  g_hl1_cond = []
+  g_hl2_cond = []
+  g_output_cond = []
+
+  for i in range(len(Input)):
+    InX = Input[i]
+    L1X, hl1_sign = vmmul_produce_sign(InX, W1, B1, l0_n, l1_n, True)
+    L2X, hl2_sign = vmmul_produce_sign(L1X, W2, B2, l1_n, l2_n, True)
+    OutX, _ = vmmul_produce_sign(L2X, W3, B3, l2_n, l3_n, False)
+    maxId = np.argmax(OutX)
+    g_L1X.append(L1X)
+    g_L2X.append(L2X)
+    g_OutX.append(OutX)
+    g_maxId.append(maxId)
+    g_hl1_sign.append(hl1_sign)
+    g_hl2_sign.append(hl2_sign)
 
   solver = pywraplp.Solver('FindMaximalPruning', optimization_problem_type)
   infinity = solver.infinity()
@@ -78,35 +99,41 @@ def FindMaximalPruning(optimization_problem_type, args):
   print("Create Constraints")
   W1_flag = [ [ solver.IntVar(0, 1, 'w1-%s-%s' %(j, i)) for j in range(l0_n) ] for i in range(l1_n) ]
   W1_pruned = [ [ W1_flag[i][j] * W1[i][j] for j in range(l0_n) ] for i in range(l1_n) ]
-  W2_flag = [ [ solver.IntVar(0, 1, 'w2-%s-%s' %(j, i)) for j in range(l1_n) ] for i in range(l2_n) ]
-  W2_pruned = [ [ W2_flag[i][j] * W2[i][j] for j in range(l1_n) ] for i in range(l2_n) ]
-  W3_flag = [ [ solver.IntVar(0, 1, 'w3-%s-%s' %(j, i)) for j in range(l2_n) ] for i in range(l3_n) ]
-  W3_pruned = [ [ W3_flag[i][j] * W3[i][j] for j in range(l2_n) ] for i in range(l3_n) ]
 
-  #sum_flags = solver.IntVar(0, num_weights, 'sum_flags')
-  #sum_flags = sum([sum(w) for w in W1_flag]) + sum([sum(w) for w in W2_flag]) + sum([sum(w) for w in W3_flag])
   sum_flags = solver.IntVar(0, l0_n * l1_n, 'sum_flags')
   sum_flags = sum([sum(w) for w in W1_flag])
 
   solver.Minimize(sum_flags)
 
   # Create hidden layer constraints
-  L1Y, hl1_cond = vmmul_consume_sign(InX, hl1_sign, W1_pruned, B1, l0_n, l1_n, True)
-  L2Y, hl2_cond = vmmul_consume_sign(L1Y, hl2_sign, W2, B2, l1_n, l2_n, True)
-  OutY, _ = vmmul_consume_sign(L2Y, None, W3, B3, l2_n, l3_n, False)
+  for i in range(len(Input)):
+    InX = Input[i]
+    L1Y, hl1_cond = vmmul_consume_sign(InX, g_hl1_sign[i], W1_pruned, B1, l0_n, l1_n, True)
+    L2Y, hl2_cond = vmmul_consume_sign(L1Y, g_hl2_sign[i], W2, B2, l1_n, l2_n, True)
+    OutY, _ = vmmul_consume_sign(L2Y, None, W3, B3, l2_n, l3_n, False)
+    g_L1Y.append(L1Y)
+    g_L2Y.append(L2Y)
+    g_OutY.append(OutY)
+    g_hl1_cond.append(hl1_cond)
+    g_hl2_cond.append(hl2_cond)
 
   # Create output layer constraints
-  output_cond = [ (OutY[i] + 0.01 <= OutY[maxId]) for i in range(l3_n) if i != maxId ]
+  #g_output_cond = [ [ (g_OutY[k][i] + 0.01 <= g_OutY[k][maxId]) for i in range(l3_n) if i != maxId ] for k in range(len(Input)) ]
+  for k in range(len(Input)):
+    maxId = g_maxId[k]
+    output_cond = [ (g_OutY[k][i] + 0.01 <= g_OutY[k][maxId]) for i in range(l3_n) if i != maxId ]
+    g_output_cond.append(output_cond)
 
   print("Add Constraints")
-  for j in range(l1_n):
-    solver.Add(hl1_cond[j])
+  for i in range(len(Input)):
+    for j in range(l1_n):
+      solver.Add(g_hl1_cond[i][j])
 
-  for j in range(l2_n):
-    solver.Add(hl2_cond[j])
+    for j in range(l2_n):
+      solver.Add(g_hl2_cond[i][j])
 
-  for j in range(l3_n - 1):
-    solver.Add(output_cond[j])
+    for j in range(l3_n - 1):
+      solver.Add(g_output_cond[i][j])
 
   print("Start solving with %d constraints %d variables" % (solver.NumConstraints(), solver.NumVariables()))
   result = SolveAndPrint(solver)
@@ -137,7 +164,7 @@ def SolveAndPrint(solver):
     # The solution looks legit (when using solvers others than
     # GLOP_LINEAR_PROGRAMMING, verifying the solution is highly recommended!).
     if (solver.VerifySolution(1e-7, True)):
-      #print(('Problem solved in %f milliseconds' % solver.wall_time()))
+      print(('Problem solved in %f milliseconds' % solver.wall_time()))
       # The objective value of the solution.
       print(('Optimal objective value = %f' % solver.Objective().Value()))
 
