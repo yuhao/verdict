@@ -3,6 +3,7 @@ from ortools.linear_solver import linear_solver_pb2
 from ortools.linear_solver import pywraplp
 import numpy as np
 import argparse
+import time
 
 LP_Solution_Status = ["OPTIMAL", "FEASIBLE", "INFEASIBLE", "UNBOUNDED", "ABNORMAL", "NOT_SOLVED"]
 
@@ -74,6 +75,7 @@ def FindMaximalRobustness(optimization_problem_type, args):
   solvers = [ pywraplp.Solver('FindMaximalRobustness%d' % i,
                   optimization_problem_type) for i in range(l3_n - 1) ]
   min_delta = 1.0
+  start_time = time.time()
   for s in range(l3_n - 1):
     solver = solvers[s]
     infinity = solver.infinity()
@@ -119,17 +121,19 @@ def FindMaximalRobustness(optimization_problem_type, args):
     if (result == pywraplp.Solver.OPTIMAL):
       if (solver.Objective().Value() < min_delta):
         min_delta = solver.Objective().Value()
-        OutY_Value = [ OutY[i].solution_value() for i in range(l3_n)]
+        #OutY_Value = [ OutY[i].solution_value() for i in range(l3_n)]
       #print("Min Delta:", min_delta)
     else:
       print(LP_Solution_Status[result])
 
-  print('OutX =', OutX)
-  print('OutY =', OutY_Value)
-  print('argmax(OutX) =', np.argmax(OutX))
-  print('argmax(OutY) =', np.argmax(OutY_Value))
+  elapsed_time = time.time() - start_time
+  print(elapsed_time)
+  #print('OutX =', OutX)
+  #print('OutY =', OutY_Value)
+  #print('argmax(OutX) =', np.argmax(OutX))
+  #print('argmax(OutY) =', np.argmax(OutY_Value))
 
-  return min_delta
+  return min_delta, elapsed_time
 
 def SolveAndPrint(solver):
   """Solve the problem and print the solution."""
@@ -160,8 +164,8 @@ def main():
                       default="../mnist/para")
   args = parser.parse_args()
 
-  max_robustness = FindMaximalRobustness(pywraplp.Solver.GLOP_LINEAR_PROGRAMMING, args)
-  print("\nMaximal Tolerable Perturbation for Image %d is %f" % (args.input_id, max_robustness))
+  max_robustness, duration = FindMaximalRobustness(pywraplp.Solver.GLOP_LINEAR_PROGRAMMING, args)
+  print("\nMaximal Tolerable Weights Variance for Image %d is %f (%f s)" % (args.input_id, max_robustness, duration))
 
 
 if __name__ == '__main__':
