@@ -21,6 +21,7 @@ from __future__ import print_function
 
 import os.path
 import time
+import sys
 
 import numpy
 
@@ -130,6 +131,12 @@ def run_training():
   # test on MNIST.
   data_sets = input_data.read_data_sets(FLAGS.train_dir, FLAGS.fake_data)
 
+  #labels and images are properties of the DataSet class, which is
+  #defined at tensorflow/contrib/learn/python/learn/datasets/mnist.py
+  #numpy.savetxt("/tmp/xx.csv", data_sets.train.labels, delimiter=",")
+  #numpy.savetxt("/tmp/yy.csv", data_sets.test.images, delimiter=",")
+  #sys.exit(1)
+
   # Tell TensorFlow that the model will be built into the default Graph.
   with tf.Graph().as_default():
     # Generate placeholders for the images and labels.
@@ -179,9 +186,6 @@ def run_training():
       feed_dict = fill_feed_dict(data_sets.train,
                                  images_placeholder,
                                  labels_placeholder)
-      #labels and images are properties of the DataSet class, which is
-      #defined at tensorflow/contrib/learn/python/learn/datasets/mnist.py
-      #print(data_sets.train.labels)
 
       # Run one step of the model.  The return values are the activations
       # from the `train_op` (which is discarded) and the `loss` Op.  To
@@ -235,21 +239,22 @@ def run_training():
                                    images_placeholder,
                                    labels_placeholder)
       #  output with softmax
-      #  print(sess.run(tf.nn.softmax(logits), feed_dict=feed_dict))
+      #  output = sess.run(tf.nn.softmax(logits), feed_dict=feed_dict)
       #  output without softmax
-        print(sess.run(logits, feed_dict=feed_dict))
+        output = sess.run(tf.argmax(logits, dimension=1), feed_dict=feed_dict)
+        numpy.savetxt("/tmp/outputX.csv", output, delimiter=",")
       #  weights1 = sess.run("hidden1/weights:0")
       #  weights2 = sess.run("hidden2/weights:0")
       #  weights3 = sess.run("softmax_linear/weights:0")
       #  biases1 = sess.run("hidden1/biases:0")
       #  biases2 = sess.run("hidden2/biases:0")
       #  biases3 = sess.run("softmax_linear/biases:0")
-      #  numpy.savetxt("para/weights1.csv", weights1, delimiter=",")
-      #  numpy.savetxt("para/weights2.csv", weights2, delimiter=",")
-      #  numpy.savetxt("para/weights3.csv", weights3, delimiter=",")
-      #  numpy.savetxt("para/biases1.csv", biases1, delimiter=",")
-      #  numpy.savetxt("para/biases2.csv", biases2, delimiter=",")
-      #  numpy.savetxt("para/biases3.csv", biases3, delimiter=",")
+      #  numpy.savetxt("/tmp/weights1.csv", weights1, delimiter=",")
+      #  numpy.savetxt("/tmp/weights2.csv", weights2, delimiter=",")
+      #  numpy.savetxt("/tmp/weights3.csv", weights3, delimiter=",")
+      #  numpy.savetxt("/tmp/biases1.csv", biases1, delimiter=",")
+      #  numpy.savetxt("/tmp/biases2.csv", biases2, delimiter=",")
+      #  numpy.savetxt("/tmp/biases3.csv", biases3, delimiter=",")
 
 
 def main(_):
