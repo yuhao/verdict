@@ -1,11 +1,11 @@
-#Readings in Safe and Robust Machine Learning
+# Readings in Safe and Robust Machine Learning
 
-##Position Papers and Articles
+## Position Papers and Articles
 1. [Concrete Problems in AI Safety](https://arxiv.org/pdf/1606.06565v1.pdf)
 2. [Machine Learning: The High-Interest Credit Card of Technical Debt](http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43146.pdf)
 3. [Cyber-physical systems you can bet your life on](https://www.microsoft.com/en-us/research/cyber-physical-systems-can-bet-life/)
 
-##Technical Papers
+## Technical Papers
 1. [Intriguing Properties of Neural Networks](https://cs.nyu.edu/~zaremba/docs/understanding.pdf)
 2. [Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images](http://arxiv.org/pdf/1412.1897v4.pdf)
 3. [Improving the Robustness of Deep Neural Networks via Stability Training](http://arxiv.org/pdf/1604.04326v1.pdf)
